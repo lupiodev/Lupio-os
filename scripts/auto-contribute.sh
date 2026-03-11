@@ -2,14 +2,15 @@
 set -euo pipefail
 
 # ============================================================
-# Lupio OS — Auto Contribute
-# Full end-to-end: save lessons + open PR in one command
-# Called automatically by the Orchestrator after user says "yes"
+# Lupio OS — Auto Contribute (Direct Push)
+# Saves learnings and pushes directly to main.
+# No PR, no review — fully automatic when user says "sí".
 # ============================================================
 
 LUPIO_DIR=".lupio"
 DATE=$(date +%Y-%m-%d)
 PROJECT_NAME=$(basename "$(pwd)")
+LUPIO_REPO="https://github.com/lupiodev/Lupio-os.git"
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -22,48 +23,49 @@ success(){ echo -e "${GREEN}[lupio]${NC} $1"; }
 warn()   { echo -e "${YELLOW}[lupio]${NC} $1"; }
 error()  { echo -e "${RED}[lupio]${NC} $1"; exit 1; }
 
-# ── Validate environment ──────────────────────────────────────
-[ -d "$LUPIO_DIR" ]                     || error ".lupio/ not found."
-command -v gh >/dev/null 2>&1           || error "gh CLI not found. Run: brew install gh && gh auth login"
-gh auth status >/dev/null 2>&1          || error "Not authenticated with GitHub. Run: gh auth login"
+# ── Validate ──────────────────────────────────────────────────
+[ -d "$LUPIO_DIR" ] || error ".lupio/ not found."
 
-# ── Check there is something to contribute ───────────────────
+# Check for gh token or GH_TOKEN env var
+if [ -n "${GH_TOKEN:-}" ]; then
+  AUTH_HEADER="Authorization: token $GH_TOKEN"
+elif gh auth status >/dev/null 2>&1; then
+  GH_TOKEN=$(gh auth token 2>/dev/null || echo "")
+  AUTH_HEADER="Authorization: token $GH_TOKEN"
+else
+  # Try reading stored token from gh config
+  GH_TOKEN=$(cat ~/.config/gh/hosts.yml 2>/dev/null | grep 'oauth_token' | awk '{print $2}' | head -1 || echo "")
+  if [ -z "$GH_TOKEN" ]; then
+    error "No GitHub auth found. Run: gh auth login"
+  fi
+  AUTH_HEADER="Authorization: token $GH_TOKEN"
+fi
+
+# ── Check for content to contribute ──────────────────────────
 HAS_CONTENT=false
-[ -f "$LUPIO_DIR/memory/prompt-changelog.md" ]   && HAS_CONTENT=true
+[ -f "$LUPIO_DIR/memory/prompt-changelog.md" ]    && HAS_CONTENT=true
 [ -f "$LUPIO_DIR/memory/reusable-candidates.md" ] && HAS_CONTENT=true
 ls "$LUPIO_DIR/memory/postmortem-"*.md 2>/dev/null | head -1 | grep -q . && HAS_CONTENT=true
 
 if [ "$HAS_CONTENT" = false ]; then
-  warn "Nothing to contribute yet. Use /save-lessons in Claude Code first."
+  warn "Nada que contribuir aún. Usa /save-lessons primero en Claude Code."
   exit 0
 fi
 
-# ── Show what will be contributed ────────────────────────────
-echo ""
-log "Preparing contribution from project: ${PROJECT_NAME}"
-echo ""
-[ -f "$LUPIO_DIR/memory/prompt-changelog.md" ]   && log "  ✓ prompt-changelog.md"
-[ -f "$LUPIO_DIR/memory/reusable-candidates.md" ] && log "  ✓ reusable-candidates.md"
-LATEST_PM=$(ls "$LUPIO_DIR/memory/postmortem-"*.md 2>/dev/null | tail -1 || echo "")
-[ -n "$LATEST_PM" ] && log "  ✓ $(basename "$LATEST_PM")"
-echo ""
+# ── Clone and push directly to main ──────────────────────────
+log "Aplicando aprendizajes a Lupio OS..."
 
-# ── Clone lupio-os ────────────────────────────────────────────
-LUPIO_REPO="https://github.com/lupiodev/Lupio-os.git"
-BRANCH="learning/${DATE}-${PROJECT_NAME}"
-
-log "Cloning Lupio OS..."
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-GIT_TERMINAL_PROMPT=0 git clone --depth=1 "$LUPIO_REPO" "$TMP_DIR" 2>/dev/null \
-  || error "Could not clone Lupio OS. Check your internet connection."
+ORIG_DIR="$(pwd)"
 
-cd "$TMP_DIR"
-git checkout -b "$BRANCH"
+# Clone with token embedded in URL for auth
+REPO_URL="https://${GH_TOKEN}@github.com/lupiodev/Lupio-os.git"
+git clone --depth=1 "$REPO_URL" "$TMP_DIR" 2>/dev/null \
+  || error "No se pudo clonar el repositorio. Verifica tu conexión."
 
-# ── Copy learnings ────────────────────────────────────────────
-ORIG_DIR=$(cd - && pwd)
+# Copy learnings
 DEST="$TMP_DIR/learnings/${DATE}-${PROJECT_NAME}"
 mkdir -p "$DEST"
 
@@ -73,68 +75,52 @@ mkdir -p "$DEST"
 [ -f "$ORIG_DIR/$LUPIO_DIR/memory/reusable-candidates.md" ] \
   && cp "$ORIG_DIR/$LUPIO_DIR/memory/reusable-candidates.md" "$DEST/"
 
-[ -n "$LATEST_PM" ] \
-  && cp "$LATEST_PM" "$DEST/postmortem.md"
+LATEST_PM=$(ls "$ORIG_DIR/$LUPIO_DIR/memory/postmortem-"*.md 2>/dev/null | tail -1 || echo "")
+[ -n "$LATEST_PM" ] && cp "$LATEST_PM" "$DEST/postmortem.md"
 
-GH_USER=$(gh api user --jq '.login' 2>/dev/null || echo "unknown")
-
+# Write meta
 cat > "$DEST/meta.md" << EOF
 # Learning Contribution
 
 **Project:** ${PROJECT_NAME}
 **Date:** ${DATE}
-**Contributed by:** ${GH_USER}
-**Auto-contributed:** yes (triggered by Orchestrator)
+**Auto-contributed:** yes
 EOF
 
-# ── Commit and push ───────────────────────────────────────────
-git add .
-git commit -m "learn: ${PROJECT_NAME} (${DATE})"
-git push origin "$BRANCH" 2>/dev/null
-
-# ── Open PR ───────────────────────────────────────────────────
-cd "$ORIG_DIR"
-
-PR_URL=$(gh pr create \
-  --repo lupiodev/Lupio-os \
-  --head "$BRANCH" \
-  --base main \
-  --title "Learning: ${PROJECT_NAME} — ${DATE}" \
-  --body "$(cat << EOF
-## Auto-Learning Contribution
-
-Contributed automatically by the Lupio OS Orchestrator after detecting significant progress in project \`${PROJECT_NAME}\`.
-
-### Contents
-$([ -f "$ORIG_DIR/$LUPIO_DIR/memory/prompt-changelog.md" ]   && echo "- **prompt-changelog.md** — prompt improvements discovered during development")
-$([ -f "$ORIG_DIR/$LUPIO_DIR/memory/reusable-candidates.md" ] && echo "- **reusable-candidates.md** — reusable patterns worth adding to templates")
-$([ -n "$LATEST_PM" ] && echo "- **postmortem.md** — phase retrospective")
-
-### Review checklist
-- [ ] Changes are generic (no project-specific logic)
-- [ ] No secrets or private data included
-- [ ] Prompt changes improve agent quality
-- [ ] Reusable patterns work across different projects
-
-> Auto-contributed by Lupio OS — merge to propagate to all projects
-EOF
-)" 2>&1)
-
-# ── Mark as contributed in local memory ──────────────────────
-TRACKER="$LUPIO_DIR/memory/contributions.md"
-cat >> "$TRACKER" << EOF
+# Update learning history
+cat >> "$TMP_DIR/LEARNING_HISTORY.md" << EOF
 
 ## ${DATE} — ${PROJECT_NAME}
-- **PR:** ${PR_URL}
-- **Status:** pending merge
+$([ -f "$DEST/prompt-changelog.md" ]    && echo "- prompt-changelog.md")
+$([ -f "$DEST/reusable-candidates.md" ] && echo "- reusable-candidates.md")
+$([ -f "$DEST/postmortem.md" ]          && echo "- postmortem.md")
 EOF
 
-# ── Done ──────────────────────────────────────────────────────
+# Commit and push directly to main
+cd "$TMP_DIR"
+git config user.name "lupio-learning-bot"
+git config user.email "bot@lupio-os"
+git add .
+git commit -m "learn: ${PROJECT_NAME} (${DATE})" --quiet
+git push origin main --quiet 2>/dev/null \
+  || error "No se pudo hacer push. Verifica que el token tiene permisos de escritura en el repo."
+
+cd "$ORIG_DIR"
+
+# Mark as contributed locally
+cat >> "$LUPIO_DIR/memory/contributions.md" << EOF
+
+## ${DATE} — ${PROJECT_NAME}
+- **Status:** pushed to main ✓
+- **Files:** $(ls "$DEST" | tr '\n' ' ')
+EOF
+
+# Done
 echo ""
-success "Done! Lupio OS will improve once you merge the PR."
+success "¡Lupio OS actualizado!"
 echo ""
-echo "  PR: ${PR_URL}"
+echo "  Los aprendizajes de '${PROJECT_NAME}' ya están en main."
+echo "  Cualquier proyecto puede recibirlos con:"
 echo ""
-echo "  After merging, any project can get these improvements with:"
-echo "  npx lupio-os update"
+echo "    npx lupio-os update"
 echo ""
