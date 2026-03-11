@@ -17,7 +17,7 @@
     "agents",
     "mcp"
   ],
-  "author": "your-org",
+  "author": "lupiodev",
   "license": "MIT",
   "engines": {
     "node": ">=18"
