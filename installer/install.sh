@@ -16,10 +16,10 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-log()    { echo -e "${BLUE}[lupio]${NC} $1"; }
-success(){ echo -e "${GREEN}[lupio]${NC} $1"; }
-warn()   { echo -e "${YELLOW}[lupio]${NC} $1"; }
-error()  { echo -e "${RED}[lupio]${NC} $1"; exit 1; }
+log()    { echo -e "${BLUE}[lupio]${NC} $1" >&2; }
+success(){ echo -e "${GREEN}[lupio]${NC} $1" >&2; }
+warn()   { echo -e "${YELLOW}[lupio]${NC} $1" >&2; }
+error()  { echo -e "${RED}[lupio]${NC} $1" >&2; exit 1; }
 
 # ── Check requirements ────────────────────────────────────────
 check_requirements() {
@@ -32,15 +32,26 @@ check_requirements() {
 # ── Download latest lupio-os ──────────────────────────────────
 download_lupio() {
   log "Downloading Lupio OS v${LUPIO_VERSION}..."
-  TMP_DIR=$(mktemp -d)
+  TMP_BASE=$(mktemp -d)
+  TMP_DIR="$TMP_BASE/lupio-os"
 
-  if git clone --depth=1 --branch "$LUPIO_BRANCH" "$LUPIO_REPO" "$TMP_DIR" 2>/dev/null; then
+  if git clone --depth=1 --branch "$LUPIO_BRANCH" "$LUPIO_REPO" "$TMP_DIR" >/dev/null 2>&1; then
     success "Downloaded from GitHub."
   else
-    warn "Could not clone from GitHub. Using local fallback..."
     # If running from a local copy of lupio-os, use that
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    TMP_DIR="$(dirname "$SCRIPT_DIR")"
+    SCRIPT_SOURCE="${BASH_SOURCE[0]:-}"
+    if [ -n "$SCRIPT_SOURCE" ] && [ "$SCRIPT_SOURCE" != "/dev/stdin" ]; then
+      SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_SOURCE")" && pwd)"
+      LOCAL_DIR="$(dirname "$SCRIPT_DIR")"
+      if [ -d "$LOCAL_DIR/claude/agents" ]; then
+        warn "Using local fallback: $LOCAL_DIR"
+        TMP_DIR="$LOCAL_DIR"
+      else
+        error "Could not download Lupio OS and no local fallback found."
+      fi
+    else
+      error "Could not clone from GitHub: $LUPIO_REPO"
+    fi
   fi
 
   echo "$TMP_DIR"
