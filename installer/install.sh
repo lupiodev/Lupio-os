@@ -5,7 +5,7 @@ set -euo pipefail
 # Lupio OS Installer
 # ============================================================
 
-LUPIO_REPO="https://github.com/your-org/lupio-os"
+LUPIO_REPO="https://github.com/lupiodev/Lupio-os"
 LUPIO_BRANCH="main"
 LUPIO_DIR=".lupio"
 LUPIO_VERSION="1.0.0"
@@ -352,7 +352,7 @@ print_summary() {
   echo "    2. Start Claude Code"
   echo "    3. Run: /bootstrap-project"
   echo ""
-  echo -e "${BLUE}  Documentation: https://github.com/your-org/lupio-os${NC}"
+  echo -e "${BLUE}  Documentation: https://github.com/lupiodev/Lupio-os${NC}"
   echo ""
 }
 
