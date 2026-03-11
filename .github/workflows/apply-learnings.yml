@@ -1,0 +1,60 @@
+name: Apply Learnings
+
+# Triggered when a learning contribution PR is merged into main
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'learnings/**'
+
+jobs:
+  apply-learnings:
+    runs-on: ubuntu-latest
+    name: Process and apply merged learnings
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect new learnings
+        id: detect
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD | grep '^learnings/' || true)
+          echo "changed=$CHANGED" >> $GITHUB_OUTPUT
+          if [ -n "$CHANGED" ]; then
+            echo "has_learnings=true" >> $GITHUB_OUTPUT
+            echo "Found new learnings:"
+            echo "$CHANGED"
+          else
+            echo "has_learnings=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node.js
+        if: steps.detect.outputs.has_learnings == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Apply prompt changes
+        if: steps.detect.outputs.has_learnings == 'true'
+        run: |
+          node scripts/ci-apply-learnings.js
+        env:
+          CHANGED_FILES: ${{ steps.detect.outputs.changed }}
+
+      - name: Commit applied changes
+        if: steps.detect.outputs.has_learnings == 'true'
+        run: |
+          git config user.name "lupio-learning-bot"
+          git config user.email "bot@lupio-os"
+          git add claude/ templates/ core/
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "learn: auto-apply merged learnings [skip ci]"
+            git push
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

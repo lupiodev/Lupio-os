@@ -49,6 +49,19 @@ switch (command) {
     break;
   }
 
+  case 'contribute':
+    console.log('\n  Lupio OS — contributing learnings...\n');
+    if (!fs.existsSync('.lupio')) {
+      console.error('Error: .lupio/ not found. Run "npx lupio-os init" first.');
+      process.exit(1);
+    }
+    if (hasLocalInstaller()) {
+      run(`bash "${path.join(__dirname, '..', 'scripts', 'contribute.sh')}"`);
+    } else {
+      run(`bash <(curl -fsSL ${REPO_RAW}/scripts/contribute.sh)`);
+    }
+    break;
+
   case 'help':
   case '--help':
   case '-h':
@@ -56,9 +69,10 @@ switch (command) {
   Lupio OS — AI Development Operating System for Claude Code
 
   Usage:
-    npx lupio-os init      Install Lupio OS into the current project
-    npx lupio-os update    Update agents, commands, and templates
-    npx lupio-os version   Show installed version
+    npx lupio-os init        Install Lupio OS into the current project
+    npx lupio-os update      Update agents, commands, and templates
+    npx lupio-os contribute  Send learnings back to Lupio OS via PR
+    npx lupio-os version     Show installed version
 
   Docs: https://github.com/lupiodev/Lupio-os
 `);
