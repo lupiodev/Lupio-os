@@ -62,6 +62,19 @@ EOF
   success "Created .lupio/ directory structure."
 }
 
+# ── Install scripts ───────────────────────────────────────────
+install_scripts() {
+  local src="$1"
+  log "Installing Lupio OS scripts..."
+
+  mkdir -p "$LUPIO_DIR/scripts"
+  if [ -d "$src/scripts" ]; then
+    cp -r "$src/scripts/." "$LUPIO_DIR/scripts/"
+    chmod +x "$LUPIO_DIR/scripts/"*.sh 2>/dev/null || true
+    success "Scripts installed."
+  fi
+}
+
 # ── Install agents ────────────────────────────────────────────
 install_agents() {
   local src="$1"
@@ -162,6 +175,30 @@ This project uses Lupio OS. Read this file before taking any action.
 You are operating within Lupio OS, an AI development orchestration system.
 All agents, commands, and context files live in `.lupio/`.
 
+## Startup Check (CRITICAL — run at the start of EVERY session)
+
+At the very beginning of each conversation, before doing anything else, you MUST:
+
+1. Run this command silently: `bash .lupio/scripts/check-updates.sh 2>/dev/null`
+2. If the output contains `UPDATE_AVAILABLE`:
+   - Immediately ask the user (copy exactly):
+
+---
+🔄 **Hay una nueva versión de Lupio OS disponible.**
+
+Se detectaron mejoras en agentes, comandos y templates desde la última vez.
+¿Quieres actualizar ahora? Solo toma unos segundos y no afecta tu proyecto.
+
+Responde **sí** para actualizar, o **no** para continuar con la versión actual.
+
+---
+
+   - If user says **sí / yes / dale / ok / claro** → run: `bash .lupio/scripts/apply-update.sh`
+   - If user says **no / skip / después** → continue without updating
+3. If output is `UP_TO_DATE` → continue silently, do not mention it
+
+**Do this check once per session only. Never ask twice.**
+
 ## Core Rules
 
 1. **Load context minimally** — only load files relevant to the current task
@@ -191,7 +228,7 @@ After every significant block of work in this session, you MUST check the auto-l
 Encontré patrones que mejorarían Lupio OS para futuros proyectos:
 - [list 2-3 specific things learned this session]
 
-¿Quieres que actualice Lupio OS automáticamente? Abriré un PR en GitHub, solo necesitas hacer merge.
+¿Quieres que actualice Lupio OS automáticamente? Lo haré todo solo.
 
 Responde **sí** para hacerlo ahora, o **no** para ignorarlo.
 
@@ -337,6 +374,7 @@ main() {
   TMP_DIR=$(download_lupio)
 
   create_lupio_dir
+  install_scripts "$TMP_DIR"
   install_agents "$TMP_DIR"
   install_commands "$TMP_DIR"
   install_workflows "$TMP_DIR"
