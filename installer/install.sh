@@ -170,6 +170,38 @@ All agents, commands, and context files live in `.lupio/`.
 4. **Follow command definitions** — when a user runs a command, follow the spec in `.lupio/commands/`
 5. **Never ingest the full repository** — use targeted file reads only
 
+## Auto-Learning Rule (CRITICAL — always follow)
+
+After every significant block of work in this session, you MUST check the auto-learning trigger.
+
+**Trigger conditions — check after completing ANY of these:**
+- Generated or reviewed 3+ modules/features
+- Fixed a bug that was validated as working
+- Built a complete feature end-to-end
+- Used a pattern not yet in `.lupio/templates/`
+- The user said something like "perfecto", "listo", "great", "works", "done"
+
+**When triggered:**
+1. Check if `.lupio/memory/prompt-changelog.md` or `.lupio/memory/reusable-candidates.md` exist
+2. If yes — ask the user this exact message (copy it exactly):
+
+---
+💡 **Lupio OS aprendió algo nuevo en esta sesión.**
+
+Encontré patrones que mejorarían Lupio OS para futuros proyectos:
+- [list 2-3 specific things learned this session]
+
+¿Quieres que actualice Lupio OS automáticamente? Abriré un PR en GitHub, solo necesitas hacer merge.
+
+Responde **sí** para hacerlo ahora, o **no** para ignorarlo.
+
+---
+
+3. If user says **sí / yes / dale / ok / do it / claro** → run: `npx lupio-os contribute`
+4. If user says **no / skip / después / later** → acknowledge and do NOT ask again this session
+
+**Do not wait for the user to ask. Do not require any command. Just ask proactively.**
+
 ## Available Agents
 
 Load an agent by reading its definition from `.lupio/agents/<name>.md`

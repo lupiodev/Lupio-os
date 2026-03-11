@@ -50,15 +50,16 @@ switch (command) {
   }
 
   case 'contribute':
+  case 'auto-contribute':
     console.log('\n  Lupio OS — contributing learnings...\n');
     if (!fs.existsSync('.lupio')) {
       console.error('Error: .lupio/ not found. Run "npx lupio-os init" first.');
       process.exit(1);
     }
     if (hasLocalInstaller()) {
-      run(`bash "${path.join(__dirname, '..', 'scripts', 'contribute.sh')}"`);
+      run(`bash "${path.join(__dirname, '..', 'scripts', 'auto-contribute.sh')}"`);
     } else {
-      run(`bash <(curl -fsSL ${REPO_RAW}/scripts/contribute.sh)`);
+      run(`bash <(curl -fsSL ${REPO_RAW}/scripts/auto-contribute.sh)`);
     }
     break;
 
