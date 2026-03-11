@@ -1,0 +1,82 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "description": "Access project files. Scope restricted to current directory.",
+      "env": {}
+    },
+    "git": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "."],
+      "description": "Git operations: status, diff, log, commit."
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "description": "GitHub API: issues, PRs, repos.",
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "description": "Persistent key-value memory for agents across sessions."
+    },
+    "fetch": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch"],
+      "description": "Fetch URLs for documentation and API references."
+    },
+    "time": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-time"],
+      "description": "Current time and timezone utilities."
+    }
+  },
+  "optionalServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "${DATABASE_URL}"],
+      "description": "PostgreSQL database queries and schema inspection.",
+      "requiresEnv": ["DATABASE_URL"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-playwright"],
+      "description": "Browser automation for E2E testing and UI validation."
+    },
+    "figma": {
+      "command": "npx",
+      "args": ["-y", "figma-developer-mcp"],
+      "description": "Read Figma designs, tokens, and components.",
+      "requiresEnv": ["FIGMA_ACCESS_TOKEN"]
+    },
+    "stripe": {
+      "command": "npx",
+      "args": ["-y", "@stripe/agent-toolkit"],
+      "description": "Stripe payments API.",
+      "requiresEnv": ["STRIPE_SECRET_KEY"]
+    },
+    "supabase": {
+      "command": "npx",
+      "args": ["-y", "@supabase/mcp-server-supabase@latest", "--supabase-url", "${SUPABASE_URL}", "--supabase-key", "${SUPABASE_SERVICE_KEY}"],
+      "description": "Supabase database, auth, and storage.",
+      "requiresEnv": ["SUPABASE_URL", "SUPABASE_SERVICE_KEY"]
+    }
+  },
+  "tokenOptimization": {
+    "maxContextFiles": 10,
+    "maxFileSize": "50kb",
+    "summarizeThreshold": "20kb",
+    "excludePatterns": [
+      "node_modules/**",
+      ".git/**",
+      "dist/**",
+      "build/**",
+      "*.lock",
+      "*.log"
+    ]
+  }
+}

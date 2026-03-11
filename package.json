@@ -1,0 +1,34 @@
+{
+  "name": "lupio-os",
+  "version": "1.0.0",
+  "description": "AI-powered development operating system for Claude Code",
+  "bin": {
+    "lupio-os": "./scripts/npx-init.js"
+  },
+  "scripts": {
+    "init": "node ./scripts/npx-init.js"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "ai",
+    "development",
+    "operating-system",
+    "agents",
+    "mcp"
+  ],
+  "author": "your-org",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "installer/",
+    "claude/",
+    "core/",
+    "templates/",
+    "mcp/",
+    "scripts/",
+    "README.md"
+  ]
+}
