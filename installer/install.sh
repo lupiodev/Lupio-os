@@ -29,32 +29,22 @@ check_requirements() {
   success "Requirements satisfied."
 }
 
+# Global var to avoid stdout-capture issues when running via bash <(curl ...)
+LUPIO_SRC=""
+
 # ── Download latest lupio-os ──────────────────────────────────
 download_lupio() {
   log "Downloading Lupio OS v${LUPIO_VERSION}..."
-  TMP_BASE=$(mktemp -d)
-  TMP_DIR="$TMP_BASE/lupio-os"
+  local tmp_base
+  tmp_base=$(mktemp -d)
+  local tmp_dir="$tmp_base/lupio-os"
 
-  if git clone --depth=1 --branch "$LUPIO_BRANCH" "$LUPIO_REPO" "$TMP_DIR" >/dev/null 2>&1; then
+  if git clone --depth=1 --branch "$LUPIO_BRANCH" "$LUPIO_REPO" "$tmp_dir" >/dev/null 2>&1; then
     success "Downloaded from GitHub."
+    LUPIO_SRC="$tmp_dir"
   else
-    # If running from a local copy of lupio-os, use that
-    SCRIPT_SOURCE="${BASH_SOURCE[0]:-}"
-    if [ -n "$SCRIPT_SOURCE" ] && [ "$SCRIPT_SOURCE" != "/dev/stdin" ]; then
-      SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_SOURCE")" && pwd)"
-      LOCAL_DIR="$(dirname "$SCRIPT_DIR")"
-      if [ -d "$LOCAL_DIR/claude/agents" ]; then
-        warn "Using local fallback: $LOCAL_DIR"
-        TMP_DIR="$LOCAL_DIR"
-      else
-        error "Could not download Lupio OS and no local fallback found."
-      fi
-    else
-      error "Could not clone from GitHub: $LUPIO_REPO"
-    fi
+    error "Could not clone from GitHub: $LUPIO_REPO. Check your internet connection."
   fi
-
-  echo "$TMP_DIR"
 }
 
 # ── Create .lupio directory structure ────────────────────────
@@ -382,16 +372,16 @@ main() {
 
   check_requirements
 
-  TMP_DIR=$(download_lupio)
+  download_lupio
 
   create_lupio_dir
-  install_scripts "$TMP_DIR"
-  install_agents "$TMP_DIR"
-  install_commands "$TMP_DIR"
-  install_workflows "$TMP_DIR"
-  configure_mcp "$TMP_DIR"
-  copy_templates "$TMP_DIR"
-  install_core_modules "$TMP_DIR"
+  install_scripts "$LUPIO_SRC"
+  install_agents "$LUPIO_SRC"
+  install_commands "$LUPIO_SRC"
+  install_workflows "$LUPIO_SRC"
+  configure_mcp "$LUPIO_SRC"
+  copy_templates "$LUPIO_SRC"
+  install_core_modules "$LUPIO_SRC"
   generate_claude_md
   init_project_context
 
