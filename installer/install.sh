@@ -8,7 +8,7 @@ set -euo pipefail
 LUPIO_REPO="https://github.com/lupiodev/Lupio-os"
 LUPIO_BRANCH="main"
 LUPIO_DIR=".lupio"
-LUPIO_VERSION="1.0.0"
+LUPIO_VERSION="1.1.0"
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -277,7 +277,8 @@ Run a command by telling Claude: "Run /command-name"
 | `/review-qa` | QA readiness review |
 | `/extract-reusable` | Extract reusable patterns |
 | `/save-lessons` | Record lessons learned |
-| `/update-knowledge` | Sync knowledge base |
+| `/update-knowledge` | Apply lessons to agents and templates |
+| `/contribute-learnings` | Push learnings to Lupio OS repo |
 
 ## Memory & Context
 
