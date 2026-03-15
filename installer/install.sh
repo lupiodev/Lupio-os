@@ -2,7 +2,8 @@
 set -euo pipefail
 
 # ============================================================
-# Lupio OS Installer
+# Lupio OS Installer v1.1.0
+# Interactive, safe, editor-aware
 # ============================================================
 
 LUPIO_REPO="https://github.com/lupiodev/Lupio-os"
@@ -14,27 +15,179 @@ GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
 NC='\033[0m'
 
-log()    { echo -e "${BLUE}[lupio]${NC} $1" >&2; }
-success(){ echo -e "${GREEN}[lupio]${NC} $1" >&2; }
-warn()   { echo -e "${YELLOW}[lupio]${NC} $1" >&2; }
-error()  { echo -e "${RED}[lupio]${NC} $1" >&2; exit 1; }
+success() { echo -e "${GREEN}  ✔${NC}  $1" >&2; }
+warn()    { echo -e "${YELLOW}  ⚠${NC}  $1" >&2; }
+error()   { echo -e "${RED}  ✖  $1${NC}" >&2; exit 1; }
+info()    { echo -e "  ${CYAN}$1${NC}" >&2; }
+step()    { echo -e "${BLUE}  →${NC}  $1" >&2; }
+hr()      { echo -e "  ${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"; }
 
-# ── Check requirements ────────────────────────────────────────
-check_requirements() {
-  log "Checking requirements..."
-  command -v git  >/dev/null 2>&1 || error "git is required but not installed."
-  command -v curl >/dev/null 2>&1 || error "curl is required but not installed."
-  success "Requirements satisfied."
+# Global vars — set by functions, consumed in main
+LUPIO_SRC=""
+EDITOR_CURSOR=false
+EDITOR_VSCODE=false
+HAS_CLAUDE_CODE=false
+
+# ── Banner ────────────────────────────────────────────────────
+print_banner() {
+  echo ""
+  echo -e "${BLUE}  ██╗     ██╗   ██╗██████╗ ██╗ ██████╗      ██████╗ ███████╗${NC}"
+  echo -e "${BLUE}  ██║     ██║   ██║██╔══██╗██║██╔═══██╗    ██╔═══██╗██╔════╝${NC}"
+  echo -e "${BLUE}  ██║     ██║   ██║██████╔╝██║██║   ██║    ██║   ██║███████╗${NC}"
+  echo -e "${BLUE}  ██║     ██║   ██║██╔═══╝ ██║██║   ██║    ██║   ██║╚════██║${NC}"
+  echo -e "${BLUE}  ███████╗╚██████╔╝██║     ██║╚██████╔╝    ╚██████╔╝███████║${NC}"
+  echo -e "${BLUE}  ╚══════╝ ╚═════╝ ╚═╝     ╚═╝ ╚═════╝      ╚═════╝ ╚══════╝${NC}"
+  echo ""
+  echo -e "  ${YELLOW}AI Development Operating System — v${LUPIO_VERSION}${NC}"
+  echo ""
+  hr
+  echo ""
 }
 
-# Global var to avoid stdout-capture issues when running via bash <(curl ...)
-LUPIO_SRC=""
+# ── Requirements ──────────────────────────────────────────────
+check_requirements() {
+  command -v git  >/dev/null 2>&1 || error "git is required but not installed."
+  command -v curl >/dev/null 2>&1 || error "curl is required but not installed."
+}
 
-# ── Download latest lupio-os ──────────────────────────────────
+# ── Detect editors and tools ──────────────────────────────────
+detect_editors() {
+  # Cursor
+  if command -v cursor >/dev/null 2>&1 \
+    || [ -d "$HOME/.cursor" ] \
+    || [ -d "/Applications/Cursor.app" ] \
+    || [ -f "$HOME/Library/Application Support/Cursor/storage.json" ]; then
+    EDITOR_CURSOR=true
+  fi
+
+  # VS Code
+  if command -v code >/dev/null 2>&1 \
+    || [ -d "$HOME/.vscode" ] \
+    || [ -d "/Applications/Visual Studio Code.app" ] \
+    || [ -f "$HOME/Library/Application Support/Code/storage.json" ]; then
+    EDITOR_VSCODE=true
+  fi
+
+  # Claude Code CLI
+  if command -v claude >/dev/null 2>&1; then
+    HAS_CLAUDE_CODE=true
+  fi
+}
+
+# ── Interactive confirmation ──────────────────────────────────
+confirm_installation() {
+  local project_dir
+  project_dir="$(pwd)"
+
+  echo -e "  ${BOLD}Detected project directory:${NC}"
+  echo -e "  ${GREEN}${project_dir}${NC}"
+  echo ""
+
+  echo -e "  ${BOLD}Detected editors:${NC}"
+  if [ "$EDITOR_CURSOR" = true ]; then
+    echo -e "  ${GREEN}✔${NC}  Cursor"
+  else
+    echo -e "  ${YELLOW}–${NC}  Cursor (not detected)"
+  fi
+  if [ "$EDITOR_VSCODE" = true ]; then
+    echo -e "  ${GREEN}✔${NC}  VS Code"
+  else
+    echo -e "  ${YELLOW}–${NC}  VS Code (not detected)"
+  fi
+  echo ""
+
+  echo -e "  ${BOLD}The following folders will be installed:${NC}"
+  echo ""
+  echo -e "  ${CYAN}.lupio/${NC}"
+  echo -e "  ${CYAN}.lupio/agents/${NC}          13 AI agent definitions"
+  echo -e "  ${CYAN}.lupio/commands/${NC}         13 executable commands"
+  echo -e "  ${CYAN}.lupio/workflows/${NC}        9 development workflows"
+  echo -e "  ${CYAN}.lupio/context/${NC}          project context (preserved if exists)"
+  echo -e "  ${CYAN}.lupio/memory/${NC}           agent memory (preserved if exists)"
+  if [ "$EDITOR_CURSOR" = true ]; then
+    echo -e "  ${CYAN}.cursor/${NC}               Cursor AI operating rules"
+  fi
+  if [ "$EDITOR_VSCODE" = true ]; then
+    echo -e "  ${CYAN}.vscode/${NC}               VS Code settings (merged, not overwritten)"
+  fi
+  echo ""
+
+  if [ -d "$LUPIO_DIR" ]; then
+    warn ".lupio/ already exists — only missing files will be added."
+    echo ""
+  fi
+
+  hr
+  echo ""
+
+  # Skip prompt if --yes flag passed (for CI or scripted use)
+  if [ "${LUPIO_YES:-}" = "true" ]; then
+    echo -e "  ${CYAN}--yes flag detected, proceeding automatically.${NC}"
+    echo ""
+    return
+  fi
+
+  # Use /dev/tty so this works when script is piped via bash <(curl ...)
+  printf "  Continue installation? (y/n): "
+  local answer
+  if read -r answer < /dev/tty 2>/dev/null; then
+    :
+  else
+    # /dev/tty not available (non-interactive environment) — require explicit --yes
+    echo ""
+    warn "Non-interactive environment detected."
+    info "To install without prompts, run:  LUPIO_YES=true bash install.sh"
+    echo ""
+    exit 1
+  fi
+
+  if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+    echo ""
+    echo -e "  ${YELLOW}Installation cancelled. No files were modified.${NC}"
+    echo ""
+    exit 0
+  fi
+
+  echo ""
+}
+
+# ── Claude Code install prompt ────────────────────────────────
+check_claude_code() {
+  if [ "$HAS_CLAUDE_CODE" = true ]; then
+    success "Claude Code CLI detected."
+    return
+  fi
+
+  echo ""
+  warn "Claude Code not detected."
+  echo ""
+  printf "  Install Claude Code now? (y/n): "
+  local answer
+  read -r answer < /dev/tty 2>/dev/null || answer="n"
+
+  if [[ "$answer" =~ ^[Yy]$ ]]; then
+    echo ""
+    if command -v npm >/dev/null 2>&1; then
+      step "Installing Claude Code via npm..."
+      npm install -g @anthropic-ai/claude-code 2>&1 \
+        && success "Claude Code installed." \
+        || warn "Could not auto-install. Run: npm install -g @anthropic-ai/claude-code"
+    else
+      warn "npm not found. Install Node.js 18+ then run: npm install -g @anthropic-ai/claude-code"
+    fi
+  else
+    info "Skipping. Install later: npm install -g @anthropic-ai/claude-code"
+  fi
+  echo ""
+}
+
+# ── Download lupio-os from GitHub ─────────────────────────────
 download_lupio() {
-  log "Downloading Lupio OS v${LUPIO_VERSION}..."
+  step "Downloading Lupio OS v${LUPIO_VERSION}..."
   local tmp_base
   tmp_base=$(mktemp -d)
   local tmp_dir="$tmp_base/lupio-os"
@@ -43,32 +196,62 @@ download_lupio() {
     success "Downloaded from GitHub."
     LUPIO_SRC="$tmp_dir"
   else
-    error "Could not clone from GitHub: $LUPIO_REPO. Check your internet connection."
+    error "Could not clone from GitHub: $LUPIO_REPO\nCheck your internet connection and try again."
   fi
 }
 
-# ── Create .lupio directory structure ────────────────────────
+# ── Create .lupio structure (safe) ────────────────────────────
 create_lupio_dir() {
-  log "Creating .lupio directory..."
+  step "Setting up .lupio/ directory..."
 
-  mkdir -p "$LUPIO_DIR"/{agents,commands,memory,context,workflows}
+  for dir in agents commands memory context workflows scripts templates core; do
+    mkdir -p "$LUPIO_DIR/$dir"
+  done
 
-  # Create .gitignore for memory and context (project-specific, not committed)
-  cat > "$LUPIO_DIR/.gitignore" << 'EOF'
-memory/
-context/
-*.local.md
-EOF
+  if [ ! -f "$LUPIO_DIR/.gitignore" ]; then
+    printf 'memory/\ncontext/\n*.local.md\n' > "$LUPIO_DIR/.gitignore"
+  fi
 
-  success "Created .lupio/ directory structure."
+  success "Directory structure ready."
 }
 
-# ── Install scripts ───────────────────────────────────────────
+# ── Install system files (agents, commands, workflows) ────────
+install_agents() {
+  local src="$1"
+  if [ -d "$src/claude/agents" ]; then
+    cp -r "$src/claude/agents/." "$LUPIO_DIR/agents/"
+    local count
+    count=$(ls "$LUPIO_DIR/agents/"*.md 2>/dev/null | wc -l | tr -d ' ')
+    success "Installed $count agents."
+  else
+    warn "Agents source not found."
+  fi
+}
+
+install_commands() {
+  local src="$1"
+  if [ -d "$src/claude/commands" ]; then
+    cp -r "$src/claude/commands/." "$LUPIO_DIR/commands/"
+    local count
+    count=$(ls "$LUPIO_DIR/commands/"*.md 2>/dev/null | wc -l | tr -d ' ')
+    success "Installed $count commands."
+  else
+    warn "Commands source not found."
+  fi
+}
+
+install_workflows() {
+  local src="$1"
+  if [ -d "$src/claude/workflows" ]; then
+    cp -r "$src/claude/workflows/." "$LUPIO_DIR/workflows/"
+    local count
+    count=$(ls "$LUPIO_DIR/workflows/"*.md 2>/dev/null | wc -l | tr -d ' ')
+    success "Installed $count workflows."
+  fi
+}
+
 install_scripts() {
   local src="$1"
-  log "Installing Lupio OS scripts..."
-
-  mkdir -p "$LUPIO_DIR/scripts"
   if [ -d "$src/scripts" ]; then
     cp -r "$src/scripts/." "$LUPIO_DIR/scripts/"
     chmod +x "$LUPIO_DIR/scripts/"*.sh 2>/dev/null || true
@@ -76,54 +259,12 @@ install_scripts() {
   fi
 }
 
-# ── Install agents ────────────────────────────────────────────
-install_agents() {
-  local src="$1"
-  log "Installing AI agents..."
-
-  if [ -d "$src/claude/agents" ]; then
-    cp -r "$src/claude/agents/." "$LUPIO_DIR/agents/"
-    count=$(ls "$LUPIO_DIR/agents/"*.md 2>/dev/null | wc -l | tr -d ' ')
-    success "Installed $count agents."
-  else
-    warn "Agent source not found, skipping."
-  fi
-}
-
-# ── Install commands ──────────────────────────────────────────
-install_commands() {
-  local src="$1"
-  log "Installing commands..."
-
-  if [ -d "$src/claude/commands" ]; then
-    cp -r "$src/claude/commands/." "$LUPIO_DIR/commands/"
-    count=$(ls "$LUPIO_DIR/commands/"*.md 2>/dev/null | wc -l | tr -d ' ')
-    success "Installed $count commands."
-  else
-    warn "Commands source not found, skipping."
-  fi
-}
-
-# ── Install workflows ─────────────────────────────────────────
-install_workflows() {
-  local src="$1"
-  log "Installing workflows..."
-
-  if [ -d "$src/claude/workflows" ]; then
-    cp -r "$src/claude/workflows/." "$LUPIO_DIR/workflows/"
-    success "Installed workflows."
-  fi
-}
-
 # ── Configure MCP ─────────────────────────────────────────────
 configure_mcp() {
   local src="$1"
-  log "Configuring MCP..."
-
-  # Install MCP config to project root .mcp.json
   if [ -f "$src/mcp/config.json" ]; then
     if [ -f ".mcp.json" ]; then
-      warn ".mcp.json already exists. Backing up to .mcp.json.bak"
+      warn ".mcp.json already exists — backed up to .mcp.json.bak"
       cp ".mcp.json" ".mcp.json.bak"
     fi
     cp "$src/mcp/config.json" ".mcp.json"
@@ -131,42 +272,115 @@ configure_mcp() {
   fi
 }
 
-# ── Copy project templates ────────────────────────────────────
-copy_templates() {
+# ── Copy templates and core modules ───────────────────────────
+copy_templates_and_core() {
   local src="$1"
-  log "Copying project templates..."
-
-  mkdir -p "$LUPIO_DIR/templates"
-  if [ -d "$src/templates" ]; then
-    cp -r "$src/templates/." "$LUPIO_DIR/templates/"
-    success "Project templates installed."
-  fi
+  [ -d "$src/templates" ] && cp -r "$src/templates/." "$LUPIO_DIR/templates/"
+  [ -d "$src/core" ]      && cp -r "$src/core/." "$LUPIO_DIR/core/"
+  success "Templates and core modules installed."
 }
 
-# ── Install backend core modules ──────────────────────────────
-install_core_modules() {
-  local src="$1"
-  log "Installing backend core modules..."
+# ── Configure Cursor (.cursor/rules.md) ───────────────────────
+configure_cursor() {
+  [ "$EDITOR_CURSOR" = false ] && return
 
-  mkdir -p "$LUPIO_DIR/core"
-  if [ -d "$src/core" ]; then
-    cp -r "$src/core/." "$LUPIO_DIR/core/"
-    success "Backend core modules installed."
-  fi
-}
+  step "Configuring Cursor..."
+  mkdir -p ".cursor"
 
-# ── Generate CLAUDE.md ────────────────────────────────────────
-generate_claude_md() {
-  log "Generating CLAUDE.md..."
+  if [ ! -f ".cursor/rules.md" ]; then
+    cat > ".cursor/rules.md" << 'EOF'
+# Lupio OS — Cursor AI Rules
 
-  if [ -f "CLAUDE.md" ]; then
-    warn "CLAUDE.md already exists. Creating .lupio/CLAUDE.lupio.md instead."
-    CLAUDE_TARGET=".lupio/CLAUDE.lupio.md"
+This project runs on **Lupio OS**, an AI development operating system.
+
+## Rules for AI assistants in Cursor
+
+1. Read `.lupio/context/project.md` at the start of every session.
+2. Read `.lupio/context/decisions.md` before making any architectural suggestion.
+3. Check `.lupio/core/` before creating a new backend module.
+4. Follow patterns in `.lupio/templates/` for consistency.
+5. Write outputs to `.lupio/memory/` for persistence across sessions.
+6. Never load the full repository — use targeted file reads only.
+7. Max 10 files loaded per task.
+
+## Key files
+
+| File | Purpose |
+|------|---------|
+| `.lupio/context/project.md` | Tech stack and current phase |
+| `.lupio/context/decisions.md` | All architectural decisions |
+| `.lupio/agents/orchestrator.md` | Task routing guide |
+| `.lupio/workflows/` | Step-by-step phase workflows |
+| `.lupio/memory/scope.md` | Product scope |
+| `.lupio/memory/architecture.md` | System architecture |
+EOF
+    success "Created .cursor/rules.md"
   else
-    CLAUDE_TARGET="CLAUDE.md"
+    success ".cursor/rules.md already exists — skipped."
+  fi
+}
+
+# ── Configure VS Code (.vscode/settings.json) ─────────────────
+configure_vscode() {
+  [ "$EDITOR_VSCODE" = false ] && return
+
+  step "Configuring VS Code..."
+  mkdir -p ".vscode"
+
+  if [ ! -f ".vscode/settings.json" ]; then
+    cat > ".vscode/settings.json" << 'EOF'
+{
+  "// lupio-os": "Settings managed by Lupio OS — do not remove this line",
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/.lupio/core": true,
+    "**/.lupio/templates": true
+  },
+  "editor.formatOnSave": true
+}
+EOF
+    success "Created .vscode/settings.json"
+  else
+    if ! grep -q "lupio-os" ".vscode/settings.json" 2>/dev/null; then
+      if command -v python3 >/dev/null 2>&1; then
+        python3 - << 'PYEOF'
+import json, sys
+try:
+    with open('.vscode/settings.json', 'r') as f:
+        settings = json.loads(f.read())
+    settings['// lupio-os'] = 'Settings merged by Lupio OS'
+    excl = settings.get('search.exclude', {})
+    excl.update({'**/.lupio/core': True, '**/.lupio/templates': True})
+    settings['search.exclude'] = excl
+    with open('.vscode/settings.json', 'w') as f:
+        json.dump(settings, f, indent=2)
+    print('  ✔  Merged Lupio OS entries into .vscode/settings.json', file=sys.stderr)
+except Exception as e:
+    print(f'  ⚠  Could not merge .vscode/settings.json: {e}', file=sys.stderr)
+PYEOF
+      else
+        warn ".vscode/settings.json exists — skipped merge (python3 not available)"
+      fi
+    else
+      success ".vscode/settings.json already configured — skipped."
+    fi
+  fi
+}
+
+# ── Generate CLAUDE.md (safe — skip if exists) ────────────────
+generate_claude_md() {
+  step "Generating CLAUDE.md..."
+
+  local claude_target
+  if [ -f "CLAUDE.md" ]; then
+    warn "CLAUDE.md already exists — writing to .lupio/CLAUDE.lupio.md instead."
+    claude_target=".lupio/CLAUDE.lupio.md"
+  else
+    claude_target="CLAUDE.md"
   fi
 
-  cat > "$CLAUDE_TARGET" << 'CLAUDEEOF'
+  cat > "$claude_target" << 'CLAUDEEOF'
 # Lupio OS — Claude Code Operating Instructions
 
 This project uses Lupio OS. Read this file before taking any action.
@@ -174,75 +388,56 @@ This project uses Lupio OS. Read this file before taking any action.
 ## System Overview
 
 You are operating within Lupio OS, an AI development orchestration system.
-All agents, commands, and context files live in `.lupio/`.
+All agents, commands, workflows, and context files live in `.lupio/`.
 
 ## Startup Check (CRITICAL — run at the start of EVERY session)
 
-At the very beginning of each conversation, before doing anything else, you MUST:
-
-1. Run this command silently: `bash .lupio/scripts/check-updates.sh 2>/dev/null`
-2. If the output contains `UPDATE_AVAILABLE`:
-   - Immediately ask the user (copy exactly):
+1. Run silently: `bash .lupio/scripts/check-updates.sh 2>/dev/null`
+2. If output contains `UPDATE_AVAILABLE` — ask the user:
 
 ---
 🔄 **Hay una nueva versión de Lupio OS disponible.**
 
-Se detectaron mejoras en agentes, comandos y templates desde la última vez.
 ¿Quieres actualizar ahora? Solo toma unos segundos y no afecta tu proyecto.
-
-Responde **sí** para actualizar, o **no** para continuar con la versión actual.
+Responde **sí** para actualizar, o **no** para continuar.
 
 ---
 
-   - If user says **sí / yes / dale / ok / claro** → run: `bash .lupio/scripts/apply-update.sh`
-   - If user says **no / skip / después** → continue without updating
-3. If output is `UP_TO_DATE` → continue silently, do not mention it
+   - **sí / yes / dale / ok** → run: `bash .lupio/scripts/apply-update.sh`
+   - **no / skip / después** → continue without updating
 
-**Do this check once per session only. Never ask twice.**
+3. If `UP_TO_DATE` → continue silently. Do this check once per session only.
 
 ## Core Rules
 
-1. **Load context minimally** — only load files relevant to the current task
-2. **Write results to disk** — save all outputs to `.lupio/memory/` or the appropriate project folder
-3. **Use defined agents** — delegate to the correct agent rather than doing everything yourself
-4. **Follow command definitions** — when a user runs a command, follow the spec in `.lupio/commands/`
-5. **Never ingest the full repository** — use targeted file reads only
+1. Load context minimally — only files relevant to the current task
+2. Write all outputs to `.lupio/memory/` or the appropriate project folder
+3. Delegate to the correct agent — do not do everything yourself
+4. Follow workflow definitions when starting a phase
+5. Never ingest the full repository — use targeted file reads only
+6. Read `.lupio/context/project.md` before starting any work
 
-## Auto-Learning Rule (CRITICAL — always follow)
+## Auto-Learning Rule (CRITICAL)
 
-After every significant block of work in this session, you MUST check the auto-learning trigger.
+After completing 3+ modules, a validated bug fix, a complete feature, or when the user says "perfecto / listo / done / works / funciona":
 
-**Trigger conditions — check after completing ANY of these:**
-- Generated or reviewed 3+ modules/features
-- Fixed a bug that was validated as working
-- Built a complete feature end-to-end
-- Used a pattern not yet in `.lupio/templates/`
-- The user said something like "perfecto", "listo", "great", "works", "done"
-
-**When triggered:**
-1. Check if `.lupio/memory/prompt-changelog.md` or `.lupio/memory/reusable-candidates.md` exist
-2. If yes — ask the user this exact message (copy it exactly):
+1. Check if `.lupio/memory/prompt-changelog.md` has new entries
+2. If yes, ask exactly:
 
 ---
 💡 **Lupio OS aprendió algo nuevo en esta sesión.**
 
 Encontré patrones que mejorarían Lupio OS para futuros proyectos:
-- [list 2-3 specific things learned this session]
+- [list 2-3 specific things learned]
 
-¿Quieres que actualice Lupio OS automáticamente? Lo haré todo solo.
-
-Responde **sí** para hacerlo ahora, o **no** para ignorarlo.
+¿Quieres que actualice Lupio OS automáticamente? (sí / no)
 
 ---
 
-3. If user says **sí / yes / dale / ok / do it / claro** → run: `npx lupio-os contribute`
-4. If user says **no / skip / después / later** → acknowledge and do NOT ask again this session
+3. **sí** → run: `bash .lupio/scripts/auto-contribute.sh`
+4. **no** → acknowledge, do NOT ask again this session
 
-**Do not wait for the user to ask. Do not require any command. Just ask proactively.**
-
-## Available Agents
-
-Load an agent by reading its definition from `.lupio/agents/<name>.md`
+## Agents
 
 | Agent | File |
 |-------|------|
@@ -260,9 +455,7 @@ Load an agent by reading its definition from `.lupio/agents/<name>.md`
 | Refactor Librarian | `.lupio/agents/refactor-librarian.md` |
 | Learning Agent | `.lupio/agents/learning-agent.md` |
 
-## Available Commands
-
-Run a command by telling Claude: "Run /command-name"
+## Commands
 
 | Command | Description |
 |---------|-------------|
@@ -280,112 +473,127 @@ Run a command by telling Claude: "Run /command-name"
 | `/update-knowledge` | Apply lessons to agents and templates |
 | `/contribute-learnings` | Push learnings to Lupio OS repo |
 
+## Workflows
+
+| Workflow | File |
+|----------|------|
+| Discovery | `.lupio/workflows/discovery.md` |
+| Architecture | `.lupio/workflows/architecture.md` |
+| Backend Module | `.lupio/workflows/backend-module.md` |
+| Frontend Module | `.lupio/workflows/frontend-module.md` |
+| Testing | `.lupio/workflows/testing.md` |
+| Code Review | `.lupio/workflows/code-review.md` |
+| QA Review | `.lupio/workflows/qa-review.md` |
+| DevOps Setup | `.lupio/workflows/devops.md` |
+| New Product | `.lupio/workflows/new-product.md` |
+
 ## Memory & Context
 
-- `.lupio/memory/` — persistent decisions, lessons, and knowledge
-- `.lupio/context/` — current project state (tech stack, scope, decisions)
-- Always read `.lupio/context/project.md` if it exists before starting work
+- `.lupio/memory/` — persistent decisions, lessons, knowledge
+- `.lupio/context/project.md` — tech stack, current phase, last task
+- `.lupio/context/decisions.md` — all architectural decisions (append only)
 
 ## Token Optimization
 
-- Load only files you need for the current task
-- Summarize long files before passing to agents
-- Write intermediate results to `.lupio/memory/` not to conversation
-- Use `.lupio/context/decisions.md` as a decision summary instead of re-deriving
+- Load architecture.md SUMMARY section only (top 30 lines)
+- Load decisions.md first 30 lines only
+- Never load more than 10 files per task
+- Write intermediate results to .lupio/memory/, not to conversation
 CLAUDEEOF
 
-  success "Generated $CLAUDE_TARGET"
+  success "Generated $claude_target"
 }
 
-# ── Initialize project context ────────────────────────────────
+# ── Initialize project context (safe) ─────────────────────────
 init_project_context() {
-  log "Initializing project context..."
+  step "Initializing project context..."
+  local project_name
+  project_name=$(basename "$(pwd)")
 
-  PROJECT_NAME=$(basename "$(pwd)")
-
-  cat > "$LUPIO_DIR/context/project.md" << EOF
+  if [ ! -f "$LUPIO_DIR/context/project.md" ]; then
+    cat > "$LUPIO_DIR/context/project.md" << EOF
 # Project Context
 
-**Name:** $PROJECT_NAME
+**Name:** $project_name
 **Initialized:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 **Lupio OS Version:** $LUPIO_VERSION
 
 ## Tech Stack
 <!-- Fill in after running /generate-architecture -->
 
-## Key Decisions
-<!-- Populated by agents during development -->
-
 ## Current Phase
 discovery
 
-## Active Agents
+## Last Completed Task
 none
+
+## Active Sprint / Focus
+initial setup
 EOF
+    success "Created project.md"
+  else
+    success "project.md already exists — skipped."
+  fi
 
-  cat > "$LUPIO_DIR/context/decisions.md" << 'EOF'
-# Decision Log
-
-Record all architectural and product decisions here.
-Format: `## DECISION-001: <title>`
-
-Each entry should include:
-- **Date:**
-- **Decision:**
-- **Rationale:**
-- **Alternatives considered:**
-- **Impact:**
-EOF
-
-  success "Project context initialized."
+  if [ ! -f "$LUPIO_DIR/context/decisions.md" ]; then
+    printf '# Decision Log\n\nFormat: `## DECISION-001: <title>`\n\n- **Date:**\n- **Decision:**\n- **Rationale:**\n- **Impact:**\n' \
+      > "$LUPIO_DIR/context/decisions.md"
+    success "Created decisions.md"
+  else
+    success "decisions.md already exists — skipped."
+  fi
 }
 
 # ── Print summary ─────────────────────────────────────────────
 print_summary() {
+  local project_dir
+  project_dir="$(pwd)"
+
   echo ""
-  echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-  echo -e "${GREEN}  Lupio OS v${LUPIO_VERSION} installed successfully!${NC}"
-  echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo -e "${GREEN}  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo -e "${GREEN}  ✔  Lupio OS v${LUPIO_VERSION} installed successfully!${NC}"
+  echo -e "${GREEN}  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
   echo ""
-  echo "  Installed to: $(pwd)/.lupio/"
+  echo -e "  Installed to: ${GREEN}${project_dir}/.lupio/${NC}"
   echo ""
   echo "  Next steps:"
-  echo "    1. Open VS Code in this folder"
-  echo "    2. Start Claude Code"
-  echo "    3. Run: /bootstrap-project"
+  if [ "$EDITOR_VSCODE" = true ]; then
+    echo "    1. Open this folder in VS Code"
+    echo "    2. Start Claude Code  (Cmd+Shift+P → Claude Code)"
+  elif [ "$EDITOR_CURSOR" = true ]; then
+    echo "    1. Open this folder in Cursor"
+    echo "    2. Start a new AI chat and describe your project"
+  else
+    echo "    1. Open this folder in your editor"
+    echo "    2. Start Claude Code"
+  fi
+  echo "    3. Claude will read CLAUDE.md and greet you"
   echo ""
-  echo -e "${BLUE}  Documentation: https://github.com/lupiodev/Lupio-os${NC}"
+  echo -e "  Update Lupio OS: ${CYAN}bash .lupio/scripts/apply-update.sh${NC}"
+  echo ""
+  echo -e "  ${BLUE}  Docs: https://github.com/lupiodev/Lupio-os${NC}"
   echo ""
 }
 
 # ── Main ──────────────────────────────────────────────────────
 main() {
-  echo ""
-  echo -e "${BLUE}  ██╗     ██╗   ██╗██████╗ ██╗ ██████╗      ██████╗ ███████╗${NC}"
-  echo -e "${BLUE}  ██║     ██║   ██║██╔══██╗██║██╔═══██╗    ██╔═══██╗██╔════╝${NC}"
-  echo -e "${BLUE}  ██║     ██║   ██║██████╔╝██║██║   ██║    ██║   ██║███████╗${NC}"
-  echo -e "${BLUE}  ██║     ██║   ██║██╔═══╝ ██║██║   ██║    ██║   ██║╚════██║${NC}"
-  echo -e "${BLUE}  ███████╗╚██████╔╝██║     ██║╚██████╔╝    ╚██████╔╝███████║${NC}"
-  echo -e "${BLUE}  ╚══════╝ ╚═════╝ ╚═╝     ╚═╝ ╚═════╝      ╚═════╝ ╚══════╝${NC}"
-  echo ""
-  echo -e "  ${YELLOW}AI Development Operating System — v${LUPIO_VERSION}${NC}"
-  echo ""
-
+  print_banner
   check_requirements
-
+  detect_editors
+  confirm_installation
+  check_claude_code
   download_lupio
-
   create_lupio_dir
   install_scripts "$LUPIO_SRC"
   install_agents "$LUPIO_SRC"
   install_commands "$LUPIO_SRC"
   install_workflows "$LUPIO_SRC"
   configure_mcp "$LUPIO_SRC"
-  copy_templates "$LUPIO_SRC"
-  install_core_modules "$LUPIO_SRC"
+  copy_templates_and_core "$LUPIO_SRC"
+  configure_cursor
+  configure_vscode
   generate_claude_md
   init_project_context
-
   print_summary
 }
 
