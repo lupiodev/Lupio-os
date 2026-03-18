@@ -1,73 +1,22 @@
-# Workflow: Frontend Module Generation
+# Workflow: Frontend Module
 
-**Trigger:** `/generate-frontend-module <feature-name>`
 **Agents:** frontend-lead, ui-reviewer
-**Input:** `.lupio/context/decisions.md`, `.lupio/memory/architecture.md`, feature spec
-**Output:** Source files + UI review notes
-
----
+**Input:** `context/decisions.md`, feature spec
+**Outputs:** source files
 
 ## Steps
 
-### Step 1 — Load context (minimal)
-Read ONLY:
-- `.lupio/context/decisions.md` (frontend stack, component library, state management)
-- List existing components in `src/components/` (names only, not contents)
+1. **Context** — Read `context/decisions.md` (frontend stack). List existing component names only.
+   Ask: feature name/route, data displayed, user actions, Figma/Lovable URL (optional).
 
-Ask user:
-1. Feature name and route (e.g. `/dashboard/orders`)?
-2. What data does this page display?
-3. What actions can the user take?
-4. Is there a Figma frame or Lovable prototype to reference?
-5. Any responsive requirements beyond default?
+2. **Design ref** — If Figma URL: extract layout + tokens. If Lovable: treat as draft, validate vs design system.
 
-### Step 2 — Check Figma/Lovable reference
-If user provides Figma URL: read design context, extract layout and component structure.
-If user provides Lovable prototype: treat as visual reference, validate against design system.
-If neither: generate from functional spec using design system defaults.
+3. **Generate** (frontend-lead): page → feature components → data hook → API client → loading/error states.
 
-### Step 3 — Run frontend-lead agent
-Load agent: `.lupio/agents/frontend-lead.md`
-Input: feature spec + design reference + decisions.md
-Generate in this order:
-1. `src/app/(dashboard)/<feature>/page.tsx` — main page
-2. `src/components/<feature>/` — feature-specific components
-3. `src/hooks/use-<feature>.ts` — data fetching hook
-4. `src/lib/api/<feature>.ts` — API client functions
-5. Loading and error state components
+4. **UI Review** (ui-reviewer) — Check: design tokens, responsive (375/768/1280), accessibility, consistency.
+   Fix BLOCKERs + MAJORs. Log MINORs as TODO comments.
 
-### Step 4 — Run ui-reviewer
-Load agent: `.lupio/agents/ui-reviewer.md`
-Input: generated component files
-Check:
-- Design system compliance (spacing, typography, color tokens)
-- Responsive design (mobile, tablet, desktop)
-- Accessibility basics (aria labels, keyboard nav, contrast)
-- Consistency with existing components
-
-Output: inline comments on generated files OR separate review notes
-
-### Step 5 — Apply UI fixes
-Apply any BLOCKER or MAJOR findings from ui-reviewer before completing.
-Log MINOR findings as TODO comments in the generated files.
-
-### Step 6 — Summary
-```
-✅ Feature <name> generated.
-
-Files created:
-- src/app/(dashboard)/<name>/page.tsx
-- src/components/<name>/ (N components)
-- src/hooks/use-<name>.ts
-- src/lib/api/<name>.ts
-
-UI Review: [PASSED / N issues fixed / N minor TODOs]
-```
-
----
+5. **Done** — Show: files created, UI review verdict.
 
 ## Token Rules
-- Load component LIST only (not file contents) to check for existing reuse
-- Load design reference once, extract key specs, do not reload
-- Generate all files before running UI review
-- Write files immediately, do not hold generated code in context
+- Load component names list only (not contents). Load design ref once, don't reload.

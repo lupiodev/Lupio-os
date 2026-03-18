@@ -1,26 +1,9 @@
-# Command: /update-knowledge
+# /update-knowledge
 
-## Description
-Applies accumulated lessons to update Lupio OS agent definitions, templates, and checklists.
+Apply accumulated lessons to agents, templates, and commands.
 
-## Required Context
-- Reads: `.lupio/memory/prompt-changelog.md`
-- Reads: `.lupio/memory/reusable-candidates.md`
+**Agent:** agents/learning-agent.md (Step 4)
+**Input:** `memory/prompt-changelog.md` PENDING entries
+**Action:** Load target agent/command → apply change → mark APPLIED
 
-## Agents Involved
-- `learning-agent` — primary
-
-## Execution Steps
-1. Read prompt-changelog.md
-2. For each pending improvement: apply to the relevant agent .md file
-3. Read reusable-candidates.md
-4. For each approved candidate: update `.lupio/templates/`
-5. Mark applied changes in changelog
-
-## Expected Output
-Updated agent files and templates
-
-## File Outputs
-`.lupio/agents/<name>.md` (updated)
-`.lupio/templates/<type>/` (updated)
-`.lupio/memory/prompt-changelog.md` (marked applied)
+**Token:** Load only changelog + target file per change.

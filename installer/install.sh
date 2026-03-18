@@ -381,124 +381,45 @@ generate_claude_md() {
   fi
 
   cat > "$claude_target" << 'CLAUDEEOF'
-# Lupio OS — Claude Code Operating Instructions
+# Lupio OS
 
-This project uses Lupio OS. Read this file before taking any action.
+All system files live in `.lupio/`. Read `.lupio/context/project.md` before any task.
 
-## System Overview
+## Session Start
 
-You are operating within Lupio OS, an AI development orchestration system.
-All agents, commands, workflows, and context files live in `.lupio/`.
+Run once, silently: `bash .lupio/scripts/check-updates.sh 2>/dev/null`
 
-## Startup Check (CRITICAL — run at the start of EVERY session)
+If output = `UPDATE_AVAILABLE`, ask:
+> 🔄 **Nueva versión de Lupio OS disponible.** ¿Actualizar ahora? (sí/no)
+- sí → `bash .lupio/scripts/apply-update.sh`
+- no → continue
 
-1. Run silently: `bash .lupio/scripts/check-updates.sh 2>/dev/null`
-2. If output contains `UPDATE_AVAILABLE` — ask the user:
+## Rules
 
----
-🔄 **Hay una nueva versión de Lupio OS disponible.**
+1. Read `context/project.md` first
+2. Load only files needed for the current task (max 10)
+3. Delegate to agents — never implement everything yourself
+4. Write all outputs to `memory/` or project folders, not to conversation
+5. Load `memory/architecture.md` SUMMARY section only (first 30 lines)
+6. Load `context/decisions.md` first 30 lines only
 
-¿Quieres actualizar ahora? Solo toma unos segundos y no afecta tu proyecto.
-Responde **sí** para actualizar, o **no** para continuar.
+## Auto-Learning
 
----
+Trigger after: 3+ modules built, bug fixed and working, full feature done, or user says "perfecto/listo/done/works".
 
-   - **sí / yes / dale / ok** → run: `bash .lupio/scripts/apply-update.sh`
-   - **no / skip / después** → continue without updating
+Check if `memory/prompt-changelog.md` has new entries. If yes, ask:
+> 💡 **Lupio OS aprendió algo nuevo.** ¿Actualizo automáticamente? (sí/no)
+- sí → `bash .lupio/scripts/auto-contribute.sh`
+- no → skip, don't ask again this session
 
-3. If `UP_TO_DATE` → continue silently. Do this check once per session only.
+## Locations
 
-## Core Rules
-
-1. Load context minimally — only files relevant to the current task
-2. Write all outputs to `.lupio/memory/` or the appropriate project folder
-3. Delegate to the correct agent — do not do everything yourself
-4. Follow workflow definitions when starting a phase
-5. Never ingest the full repository — use targeted file reads only
-6. Read `.lupio/context/project.md` before starting any work
-
-## Auto-Learning Rule (CRITICAL)
-
-After completing 3+ modules, a validated bug fix, a complete feature, or when the user says "perfecto / listo / done / works / funciona":
-
-1. Check if `.lupio/memory/prompt-changelog.md` has new entries
-2. If yes, ask exactly:
-
----
-💡 **Lupio OS aprendió algo nuevo en esta sesión.**
-
-Encontré patrones que mejorarían Lupio OS para futuros proyectos:
-- [list 2-3 specific things learned]
-
-¿Quieres que actualice Lupio OS automáticamente? (sí / no)
-
----
-
-3. **sí** → run: `bash .lupio/scripts/auto-contribute.sh`
-4. **no** → acknowledge, do NOT ask again this session
-
-## Agents
-
-| Agent | File |
-|-------|------|
-| Orchestrator | `.lupio/agents/orchestrator.md` |
-| Product Discovery | `.lupio/agents/product-discovery.md` |
-| Solution Architect | `.lupio/agents/solution-architect.md` |
-| UX Reviewer | `.lupio/agents/ux-reviewer.md` |
-| UI Reviewer | `.lupio/agents/ui-reviewer.md` |
-| Frontend Lead | `.lupio/agents/frontend-lead.md` |
-| Backend Lead | `.lupio/agents/backend-lead.md` |
-| QA Lead | `.lupio/agents/qa-lead.md` |
-| DevOps Lead | `.lupio/agents/devops-lead.md` |
-| PM Controller | `.lupio/agents/pm-controller.md` |
-| Cost Estimator | `.lupio/agents/cost-estimator.md` |
-| Refactor Librarian | `.lupio/agents/refactor-librarian.md` |
-| Learning Agent | `.lupio/agents/learning-agent.md` |
-
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `/bootstrap-project` | Scaffold a new project |
-| `/generate-scope` | Create scope document |
-| `/generate-architecture` | Design system architecture |
-| `/generate-backend-module` | Generate a backend module |
-| `/generate-frontend-module` | Generate a frontend module |
-| `/generate-tests` | Create test suite |
-| `/review-ux` | UX review |
-| `/review-code` | Code quality review |
-| `/review-qa` | QA readiness review |
-| `/extract-reusable` | Extract reusable patterns |
-| `/save-lessons` | Record lessons learned |
-| `/update-knowledge` | Apply lessons to agents and templates |
-| `/contribute-learnings` | Push learnings to Lupio OS repo |
-
-## Workflows
-
-| Workflow | File |
-|----------|------|
-| Discovery | `.lupio/workflows/discovery.md` |
-| Architecture | `.lupio/workflows/architecture.md` |
-| Backend Module | `.lupio/workflows/backend-module.md` |
-| Frontend Module | `.lupio/workflows/frontend-module.md` |
-| Testing | `.lupio/workflows/testing.md` |
-| Code Review | `.lupio/workflows/code-review.md` |
-| QA Review | `.lupio/workflows/qa-review.md` |
-| DevOps Setup | `.lupio/workflows/devops.md` |
-| New Product | `.lupio/workflows/new-product.md` |
-
-## Memory & Context
-
-- `.lupio/memory/` — persistent decisions, lessons, knowledge
-- `.lupio/context/project.md` — tech stack, current phase, last task
-- `.lupio/context/decisions.md` — all architectural decisions (append only)
-
-## Token Optimization
-
-- Load architecture.md SUMMARY section only (top 30 lines)
-- Load decisions.md first 30 lines only
-- Never load more than 10 files per task
-- Write intermediate results to .lupio/memory/, not to conversation
+- Agents: `.lupio/agents/<name>.md`
+- Commands: `.lupio/commands/<name>.md`
+- Workflows: `.lupio/workflows/<name>.md`
+- Core modules: `.lupio/core/<module>/module.md`
+- Context: `.lupio/context/project.md`, `decisions.md`
+- Memory: `.lupio/memory/`
 CLAUDEEOF
 
   success "Generated $claude_target"
