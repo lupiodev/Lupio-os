@@ -250,6 +250,14 @@ install_workflows() {
   fi
 }
 
+install_system_map() {
+  local src="$1"
+  if [ -f "$src/claude/SYSTEM_MAP.md" ]; then
+    cp "$src/claude/SYSTEM_MAP.md" "$LUPIO_DIR/SYSTEM_MAP.md"
+    success "System map installed."
+  fi
+}
+
 install_scripts() {
   local src="$1"
   if [ -d "$src/scripts" ]; then
@@ -412,8 +420,17 @@ Check if `memory/prompt-changelog.md` has new entries. If yes, ask:
 - sí → `bash .lupio/scripts/auto-contribute.sh`
 - no → skip, don't ask again this session
 
+## Before Modifying System Files
+
+Read `.lupio/SYSTEM_MAP.md` first — it maps every editable element to its exact file and section.
+No need to scan all files; use the Quick Lookup table to navigate directly.
+
+**IDE tip:** Select the target section in the editor before asking for a change — Claude receives
+it as context and skips the file read.
+
 ## Locations
 
+- System map: `.lupio/SYSTEM_MAP.md` ← start here when editing system files
 - Agents: `.lupio/agents/<name>.md`
 - Commands: `.lupio/commands/<name>.md`
 - Workflows: `.lupio/workflows/<name>.md`
@@ -509,6 +526,7 @@ main() {
   install_agents "$LUPIO_SRC"
   install_commands "$LUPIO_SRC"
   install_workflows "$LUPIO_SRC"
+  install_system_map "$LUPIO_SRC"
   configure_mcp "$LUPIO_SRC"
   copy_templates_and_core "$LUPIO_SRC"
   configure_cursor
