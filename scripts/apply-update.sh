@@ -35,6 +35,9 @@ cp -r "$TMP_DIR/claude/commands/." "$LUPIO_DIR/commands/"
 log "Actualizando workflows..."
 [ -d "$TMP_DIR/claude/workflows" ] && cp -r "$TMP_DIR/claude/workflows/." "$LUPIO_DIR/workflows/"
 
+log "Actualizando system map..."
+[ -f "$TMP_DIR/claude/SYSTEM_MAP.md" ] && cp "$TMP_DIR/claude/SYSTEM_MAP.md" "$LUPIO_DIR/SYSTEM_MAP.md"
+
 log "Actualizando módulos core..."
 cp -r "$TMP_DIR/core/."            "$LUPIO_DIR/core/"
 
