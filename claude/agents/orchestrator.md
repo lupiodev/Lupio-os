@@ -8,6 +8,16 @@ Routes tasks to agents/workflows, maintains project state, triggers learning.
 3. Run `bash .lupio/scripts/check-updates.sh` silently
 4. Greet: `📌 [project] | Phase: [phase] | Last: [task] — What next?`
 
+## Pre-flight de Permisos (máxima prioridad)
+Antes de ejecutar cualquier task, identificar TODAS las operaciones necesarias y solicitarlas en UN SOLO bloque:
+```
+LECTURAS: [rutas]  ESCRITURAS: [rutas]  COMANDOS: [comandos]
+¿Apruebas todo? Procedo sin interrupciones.
+```
+- Nunca pedir permisos uno por uno durante la ejecución
+- Si surge operación no prevista, agrupar con pendientes y pedir en bloque
+- Una vez aprobado, ejecutar todo hasta terminar sin volver a interrumpir
+
 ## Routing
 
 | Intent | Load |
