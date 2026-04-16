@@ -45,7 +45,68 @@ If found, ask: `💡 Lupio OS aprendió algo nuevo. ¿Actualizo? (sí/no)`
 - sí → `bash .lupio/scripts/auto-contribute.sh`
 - no → skip, don't ask again this session
 
+## Análisis Pre-Ejecución (CRÍTICO — antes de tocar código)
+
+Ante cualquier solicitud de cambio o nueva funcionalidad, **responder PRIMERO con este análisis:**
+
+```
+🔍 ANÁLISIS LUPIO OS — [MÓDULO]
+
+📊 SCOPE
+├─ Archivos a tocar: ~[X]  |  Archivos de referencia: ~[X]
+├─ Líneas estimadas: ~[X,XXX]
+├─ Tokens entrada: ~[X,XXX]  |  Tokens salida: ~[X,XXX]
+├─ Complejidad: [Baja/Media/Alta]
+└─ Modelo ideal: [Sonnet | Opus | Híbrido]
+
+⚠️ ALERTA [🟢 BAJO | 🟡 MEDIO | 🔴 ALTO]
+├─ Contexto: [Suficiente | Insuficiente | NUEVA VENTANA recomendada]
+└─ Decision: ¿Continuar aquí o abrir nueva ventana?
+
+🎯 RECOMENDACIÓN
+├─ Opción A: [descripción + tokens + tiempo]
+├─ Opción B: [alternativa]
+└─ Voy por [X] porque...
+
+Responde "Adelante" para proceder o "Nueva ventana" para exportar contexto.
+```
+
+### Criterios de alerta
+
+**Nueva ventana recomendada (🔴):**
+- Contexto acumulado > 20,000 tokens
+- Archivos únicos > 15 o archivos muy grandes
+- Cambios en 3+ módulos distintos
+- Breaking changes o refactors arquitectónicos
+- Más de 5 cambios en esta sesión
+
+**Continuar aquí (🟢):**
+- Contexto < 10,000 tokens
+- 1-2 módulos máximo
+- Cambios puntuales (< 5 archivos)
+- Coherencia beneficiada por continuidad
+
+### Modelo recomendado
+- **Sonnet** — default, 70% de los casos (features, ajustes, bugs normales)
+- **Opus** — arquitectura crítica, refactors grandes, debugging complejo
+- **Nunca Opus para** Tailwind tweaks, textos, cambios pequeños
+
+### Excepciones
+- `"Ignora análisis, adelante"` → respeta, pero loguea el riesgo brevemente
+- `"Usa Opus sin importar costo"` → ok, pero alerta proyección
+- `"Nueva ventana"` → genera resumen exportable para la próxima sesión
+
+### Reporte de sesión
+Al finalizar una sesión de trabajo, reportar:
+```
+📈 SESIÓN [MÓDULO] — Resumen
+Cambios: [X] | Tokens aprox: ~[X,XXX] | Modelo: [Sonnet/Opus]
+Proyección mes: [OK | Advertencia | Riesgo]
+```
+
 ## Token Rules
+- Sonnet es el modelo default — Opus solo para tareas pesadas justificadas
 - Load only `context/project.md` + first 30 lines of `context/decisions.md` at startup
 - Pass summaries between agents, not file contents
 - Max 10 files in context. Write overflow to `memory/`
+- Estimación rápida: 1 archivo (200 líneas) ≈ 500 tokens | 1 línea código ≈ 2.5 tokens
