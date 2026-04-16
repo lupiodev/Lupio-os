@@ -41,6 +41,9 @@ log "Actualizando system map..."
 log "Actualizando módulos core..."
 cp -r "$TMP_DIR/core/."            "$LUPIO_DIR/core/"
 
+log "Actualizando prompts..."
+[ -d "$TMP_DIR/claude/prompts" ] && mkdir -p "$LUPIO_DIR/prompts" && cp -r "$TMP_DIR/claude/prompts/." "$LUPIO_DIR/prompts/"
+
 log "Actualizando templates..."
 cp -r "$TMP_DIR/templates/."       "$LUPIO_DIR/templates/"
 
