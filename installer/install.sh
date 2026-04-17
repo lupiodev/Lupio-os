@@ -204,7 +204,7 @@ download_lupio() {
 create_lupio_dir() {
   step "Setting up .lupio/ directory..."
 
-  for dir in agents commands memory context workflows scripts templates core; do
+  for dir in agents commands memory context workflows scripts templates core prompts; do
     mkdir -p "$LUPIO_DIR/$dir"
   done
 
@@ -255,6 +255,41 @@ install_system_map() {
   if [ -f "$src/claude/SYSTEM_MAP.md" ]; then
     cp "$src/claude/SYSTEM_MAP.md" "$LUPIO_DIR/SYSTEM_MAP.md"
     success "System map installed."
+  fi
+}
+
+install_prompts() {
+  local src="$1"
+  if [ -d "$src/claude/prompts" ]; then
+    cp -r "$src/claude/prompts/." "$LUPIO_DIR/prompts/"
+    local count
+    count=$(ls "$LUPIO_DIR/prompts/"*.md 2>/dev/null | wc -l | tr -d ' ')
+    success "Installed $count prompt templates."
+  fi
+}
+
+# ── Configure .claude/settings.local.json ────────────────────
+configure_claude_settings() {
+  step "Configuring Claude Code permissions..."
+  mkdir -p ".claude"
+
+  if [ ! -f ".claude/settings.local.json" ]; then
+    cat > ".claude/settings.local.json" << 'EOF'
+{
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  }
+}
+EOF
+    success "Created .claude/settings.local.json (bypassPermissions enabled)"
+  else
+    # Check if bypassPermissions already set
+    if grep -q "bypassPermissions" ".claude/settings.local.json" 2>/dev/null; then
+      success ".claude/settings.local.json already configured — skipped."
+    else
+      warn ".claude/settings.local.json exists but lacks bypassPermissions."
+      info "Add manually: \"defaultMode\": \"bypassPermissions\" under \"permissions\""
+    fi
   fi
 }
 
@@ -402,6 +437,45 @@ If output = `UPDATE_AVAILABLE`, ask:
 - sí → `bash .lupio/scripts/apply-update.sh`
 - no → continue
 
+## Análisis Pre-Ejecución (CRÍTICO — antes de tocar código)
+
+Ante cualquier solicitud de cambio, responder PRIMERO con este análisis:
+
+```
+🔍 ANÁLISIS LUPIO OS — [MÓDULO]
+
+📊 SCOPE
+├─ Archivos a tocar: ~[X]  |  Referencia: ~[X]
+├─ Tokens entrada: ~[X,XXX]  |  Tokens salida: ~[X,XXX]
+└─ Modelo ideal: [Sonnet | Opus]
+
+⚠️ ALERTA [🟢 BAJO | 🟡 MEDIO | 🔴 ALTO]
+└─ ¿Continuar aquí o nueva ventana?
+
+🎯 RECOMENDACIÓN: [Opción A vs B — voy por X porque...]
+
+Responde "Adelante" o "Nueva ventana".
+```
+
+- Nueva ventana (🔴): contexto >20K tokens | archivos >15 | 3+ módulos | breaking changes | >5 cambios en sesión
+- Continuar (🟢): contexto <10K | 1-2 módulos | <5 archivos
+- Modelo: Sonnet=default | Opus=arquitectura/refactor grande | Nunca Opus para tweaks
+- Override "Ignora análisis, adelante" → respeta pero loguea riesgo brevemente
+- "Nueva ventana" → indicar que llene `.lupio/prompts/context-template.md`
+
+## Pre-flight de Permisos (CRÍTICO — máxima prioridad)
+
+Antes de ejecutar, identificar TODAS las operaciones y solicitarlas en UN SOLO bloque:
+
+```
+LECTURAS: [rutas]  ESCRITURAS: [rutas]  COMANDOS: [comandos]
+¿Apruebas todo? Procedo sin interrupciones.
+```
+
+- Nunca pedir permisos uno por uno durante la ejecución
+- Si surge operación no prevista, agrupar con pendientes y pedir en bloque
+- Una vez aprobado, ejecutar todo hasta terminar sin volver a interrumpir
+
 ## Rules
 
 1. Read `context/project.md` first
@@ -434,6 +508,7 @@ it as context and skips the file read.
 - Agents: `.lupio/agents/<name>.md`
 - Commands: `.lupio/commands/<name>.md`
 - Workflows: `.lupio/workflows/<name>.md`
+- Prompts: `.lupio/prompts/context-template.md` ← llenar al abrir nueva ventana
 - Core modules: `.lupio/core/<module>/module.md`
 - Context: `.lupio/context/project.md`, `decisions.md`
 - Memory: `.lupio/memory/`
@@ -507,6 +582,11 @@ print_summary() {
   fi
   echo "    3. Claude will read CLAUDE.md and greet you"
   echo ""
+  echo -e "  ${YELLOW}  ⚠  Global Claude Code config (one-time, per machine):${NC}"
+  echo -e "  Add to ${CYAN}~/.claude/settings.json${NC} under \"permissions\":"
+  echo -e "  ${CYAN}    \"defaultMode\": \"bypassPermissions\"${NC}"
+  echo -e "  This lets Claude work without interruptions once you approve the plan."
+  echo ""
   echo -e "  Update Lupio OS: ${CYAN}bash .lupio/scripts/apply-update.sh${NC}"
   echo ""
   echo -e "  ${BLUE}  Docs: https://github.com/lupiodev/Lupio-os${NC}"
@@ -527,10 +607,12 @@ main() {
   install_commands "$LUPIO_SRC"
   install_workflows "$LUPIO_SRC"
   install_system_map "$LUPIO_SRC"
+  install_prompts "$LUPIO_SRC"
   configure_mcp "$LUPIO_SRC"
   copy_templates_and_core "$LUPIO_SRC"
   configure_cursor
   configure_vscode
+  configure_claude_settings
   generate_claude_md
   init_project_context
   print_summary
