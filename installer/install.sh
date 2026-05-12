@@ -204,12 +204,12 @@ download_lupio() {
 create_lupio_dir() {
   step "Setting up .lupio/ directory..."
 
-  for dir in agents commands memory context workflows scripts templates core prompts; do
+  for dir in agents commands memory context workflows scripts templates core prompts checkpoints; do
     mkdir -p "$LUPIO_DIR/$dir"
   done
 
   if [ ! -f "$LUPIO_DIR/.gitignore" ]; then
-    printf 'memory/\ncontext/\n*.local.md\n' > "$LUPIO_DIR/.gitignore"
+    printf 'memory/\ncontext/\ncheckpoints/\n*.local.md\n' > "$LUPIO_DIR/.gitignore"
   fi
 
   success "Directory structure ready."
@@ -277,11 +277,26 @@ configure_claude_settings() {
     cat > ".claude/settings.local.json" << 'EOF'
 {
   "permissions": {
-    "defaultMode": "bypassPermissions"
+    "defaultMode": "bypassPermissions",
+    "ask": [
+      "Bash(rm -rf:*)",
+      "Bash(rm -fr:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -fd:*)",
+      "Bash(git branch -D:*)",
+      "Bash(kubectl delete:*)",
+      "Bash(docker rm -f:*)",
+      "Bash(docker system prune:*)",
+      "Bash(DROP TABLE:*)",
+      "Bash(DROP DATABASE:*)",
+      "Bash(TRUNCATE:*)"
+    ]
   }
 }
 EOF
-    success "Created .claude/settings.local.json (bypassPermissions enabled)"
+    success "Created .claude/settings.local.json (bypassPermissions + careful mode)"
   else
     # Check if bypassPermissions already set
     if grep -q "bypassPermissions" ".claude/settings.local.json" 2>/dev/null; then
@@ -461,7 +476,7 @@ Responde "Adelante" o "Nueva ventana".
 - Continuar (🟢): contexto <10K | 1-2 módulos | <5 archivos
 - Modelo: Sonnet=default | Opus=arquitectura/refactor grande | Nunca Opus para tweaks
 - Override "Ignora análisis, adelante" → respeta pero loguea riesgo brevemente
-- "Nueva ventana" → indicar que llene `.lupio/prompts/context-template.md`
+- "Nueva ventana" → ejecutar `/context-save`, abrir nueva ventana, ejecutar `/context-restore`
 
 ## Pre-flight de Permisos (CRÍTICO — máxima prioridad)
 
@@ -508,10 +523,16 @@ it as context and skips the file read.
 - Agents: `.lupio/agents/<name>.md`
 - Commands: `.lupio/commands/<name>.md`
 - Workflows: `.lupio/workflows/<name>.md`
-- Prompts: `.lupio/prompts/context-template.md` ← llenar al abrir nueva ventana
+- Prompts: `.lupio/prompts/context-template.md` ← template manual (fallback)
+- Checkpoints: `.lupio/checkpoints/` ← snapshots automáticos vía `/context-save`
 - Core modules: `.lupio/core/<module>/module.md`
 - Context: `.lupio/context/project.md`, `decisions.md`
 - Memory: `.lupio/memory/`
+
+## Continuity Commands
+
+- `/context-save` — guarda checkpoint (~1-2KB) con git state, decisiones, próximos pasos
+- `/context-restore` — restaura el último checkpoint en nueva ventana sin reescanear el proyecto
 CLAUDEEOF
 
   success "Generated $claude_target"

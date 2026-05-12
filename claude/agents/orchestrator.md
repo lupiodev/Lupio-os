@@ -94,7 +94,7 @@ Responde "Adelante" para proceder o "Nueva ventana" para exportar contexto.
 ### Excepciones
 - `"Ignora análisis, adelante"` → respeta, pero loguea el riesgo brevemente
 - `"Usa Opus sin importar costo"` → ok, pero alerta proyección
-- `"Nueva ventana"` → indicar al usuario que llene `.lupio/prompts/context-template.md` para mantener continuidad
+- `"Nueva ventana"` → ejecutar `/context-save` para generar checkpoint, indicar al usuario que abra nueva ventana y ejecute `/context-restore`
 
 ### Reporte de sesión
 Al finalizar una sesión de trabajo, reportar:
