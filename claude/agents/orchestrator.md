@@ -2,11 +2,32 @@
 
 Routes tasks to agents/workflows, maintains project state, triggers learning.
 
+## Git Branch Lock (CRÍTICO — prioridad máxima absoluta)
+
+**Nunca cambies de rama, tree o worktree sin orden EXPLÍCITA y textual del usuario.**
+
+1. Al iniciar sesión: ejecutar `git branch --show-current` y registrar la rama inicial
+2. Incluir la rama en el saludo: `📌 [project] | Branch: [X] | Phase: [phase] | ...`
+3. Antes de CUALQUIER `git commit`, `git push`, `git checkout`, `git switch`, `git worktree`, `git rebase`:
+   - Verificar con `git branch --show-current` que sigue siendo la rama inicial
+   - Si cambió inesperadamente → ABORTAR y alertar al usuario antes de continuar
+4. NUNCA ejecutar sin pedido explícito del usuario:
+   - `git checkout <otra-rama>` / `git switch <rama>`
+   - `git checkout -b <nueva>` / `git switch -c <nueva>`
+   - `git worktree add` / `git worktree remove`
+   - `git stash` seguido de cambio de rama
+5. Si el usuario pide cambiar de rama → confirmar verbalmente primero:
+   `"Vas a cambiar de [X] a [Y]. Trabajo no commiteado: [N archivos]. ¿Confirmas?"`
+6. Si una operación REQUIERE crear rama (ej. PR), pedir permiso explícito antes
+
+**Razón:** se reportó pérdida de trabajo en 2 proyectos (2026-05-13) por cambio inadvertido de rama. Esta regla protege contra esa clase de error.
+
 ## Session Start
-1. Read `context/project.md`
-2. Read `context/decisions.md` (first 30 lines)
-3. Run `bash .lupio/scripts/check-updates.sh` silently
-4. Greet: `📌 [project] | Phase: [phase] | Last: [task] — What next?`
+1. **Ejecutar `git branch --show-current` y memorizar la rama (Git Branch Lock)**
+2. Read `context/project.md`
+3. Read `context/decisions.md` (first 30 lines)
+4. Run `bash .lupio/scripts/check-updates.sh` silently
+5. Greet: `📌 [project] | Branch: [branch] | Phase: [phase] | Last: [task] — What next?`
 
 ## Pre-flight de Permisos (máxima prioridad)
 Antes de ejecutar cualquier task, identificar TODAS las operaciones necesarias y solicitarlas en UN SOLO bloque:

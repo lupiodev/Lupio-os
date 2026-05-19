@@ -286,6 +286,10 @@ configure_claude_settings() {
       "Bash(git reset --hard:*)",
       "Bash(git clean -fd:*)",
       "Bash(git branch -D:*)",
+      "Bash(git checkout -b:*)",
+      "Bash(git switch:*)",
+      "Bash(git worktree:*)",
+      "Bash(git rebase:*)",
       "Bash(kubectl delete:*)",
       "Bash(docker rm -f:*)",
       "Bash(docker system prune:*)",
@@ -451,6 +455,22 @@ If output = `UPDATE_AVAILABLE`, ask:
 > 🔄 **Nueva versión de Lupio OS disponible.** ¿Actualizar ahora? (sí/no)
 - sí → `bash .lupio/scripts/apply-update.sh`
 - no → continue
+
+## Git Branch Lock (CRÍTICO — prioridad máxima absoluta)
+
+**Nunca cambies de rama, tree o worktree sin orden EXPLÍCITA y textual del usuario.**
+
+1. Al iniciar sesión: ejecutar `git branch --show-current` y registrar la rama inicial
+2. Incluir la rama en el saludo: `📌 [project] | Branch: [X] | ...`
+3. Antes de CUALQUIER commit, push, checkout, switch, worktree o rebase: verificar
+   con `git branch --show-current` que sigue siendo la rama inicial. Si cambió → ABORTAR.
+4. NUNCA ejecutar sin pedido explícito del usuario:
+   - `git checkout <otra-rama>` / `git switch <rama>` / `git checkout -b` / `git switch -c`
+   - `git worktree add` / `git worktree remove`
+5. Si el usuario pide cambiar de rama → confirmar verbalmente:
+   `"Vas a cambiar de [X] a [Y]. Trabajo no commiteado: [N archivos]. ¿Confirmas?"`
+
+Razón: pérdida de trabajo reportada por cambio inadvertido de rama. Esta regla lo previene.
 
 ## Análisis Pre-Ejecución (CRÍTICO — antes de tocar código)
 
