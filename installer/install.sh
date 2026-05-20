@@ -278,6 +278,29 @@ configure_claude_settings() {
 {
   "permissions": {
     "defaultMode": "bypassPermissions",
+    "deny": [
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git tag:*)",
+      "Bash(vercel:*)",
+      "Bash(netlify deploy:*)",
+      "Bash(flyctl deploy:*)",
+      "Bash(fly deploy:*)",
+      "Bash(railway up:*)",
+      "Bash(railway deploy:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(gcloud app deploy:*)",
+      "Bash(gcloud run deploy:*)",
+      "Bash(eb deploy:*)",
+      "Bash(pm2 deploy:*)",
+      "Bash(serverless deploy:*)",
+      "Bash(sls deploy:*)",
+      "Bash(npm publish:*)",
+      "Bash(yarn publish:*)",
+      "Bash(gh release create:*)",
+      "Bash(gh workflow run:*)",
+      "Bash(kubectl apply:*)"
+    ],
     "ask": [
       "Bash(rm -rf:*)",
       "Bash(rm -fr:*)",
@@ -455,6 +478,22 @@ If output = `UPDATE_AVAILABLE`, ask:
 > 🔄 **Nueva versión de Lupio OS disponible.** ¿Actualizar ahora? (sí/no)
 - sí → `bash .lupio/scripts/apply-update.sh`
 - no → continue
+
+## No Commits / No Deploys (CRÍTICO — prioridad máxima absoluta)
+
+**Nunca, bajo ninguna circunstancia, ejecutar commits, push, tags de release o deploys.**
+El usuario maneja todo eso manualmente.
+
+Bloqueado siempre: `git commit`, `git push`, `git tag`, deploys (vercel, netlify, flyctl,
+fly, railway, firebase, gcloud, eb, pm2, serverless, npm/yarn publish), `gh release`,
+`gh workflow run`, `kubectl apply`.
+
+Permitido: `git add`, `git status`, `git diff`, `git log` (staging y consulta sí).
+
+Si el usuario pide explícitamente "haz commit" / "deploy esto":
+1. Confirmar: "Tienes deshabilitados commits/deploys. ¿Confirmas que YO lo ejecute ahora?"
+2. Solo con confirmación textual → proceder con esa única operación
+3. La confirmación NO es permiso permanente para la sesión
 
 ## Git Branch Lock (CRÍTICO — prioridad máxima absoluta)
 

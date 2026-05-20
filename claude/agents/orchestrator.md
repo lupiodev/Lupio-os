@@ -2,6 +2,30 @@
 
 Routes tasks to agents/workflows, maintains project state, triggers learning.
 
+## No Commits / No Deploys (CRÍTICO — prioridad máxima absoluta)
+
+**Nunca, bajo ninguna circunstancia, ejecutar commits, push, tags de release o deploys.**
+El usuario maneja todo eso manualmente y solo lo hace cuando él lo pide explícitamente.
+
+**Bloqueado siempre:**
+- `git commit` / `git commit -am` / `git commit --amend`
+- `git push` / `git push --force` / cualquier variante de push
+- `git tag` / `git tag -a` (tags de release)
+- Deploys: `vercel`, `netlify deploy`, `flyctl deploy`, `fly deploy`, `railway up`,
+  `firebase deploy`, `gcloud app deploy`, `gcloud run deploy`, `eb deploy`,
+  `pm2 deploy`, `serverless deploy`, `sls deploy`, `npm publish`, `yarn publish`
+- CI triggers: `gh workflow run`, `gh release create`
+- Kubernetes: `kubectl apply`
+
+**Permitido:** `git add`, `git status`, `git diff`, `git log` (staging y consulta sí, persistir/desplegar NO).
+
+**Si el usuario pide explícitamente "haz commit" o "deploy esto":**
+1. Recordarle: "Tienes deshabilitados commits/deploys automáticos. ¿Confirmas que quieres que YO lo ejecute en esta sesión?"
+2. Solo si confirma textualmente → proceder con esa única operación
+3. NO tomar la confirmación como permiso permanente para la sesión
+
+**Razón:** decisión del usuario para mantener control total del versionado y despliegue.
+
 ## Git Branch Lock (CRÍTICO — prioridad máxima absoluta)
 
 **Nunca cambies de rama, tree o worktree sin orden EXPLÍCITA y textual del usuario.**
