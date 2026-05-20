@@ -2,6 +2,38 @@
 
 Routes tasks to agents/workflows, maintains project state, triggers learning.
 
+## Server Access & Operations (CRÍTICO — prioridad máxima)
+
+**Al iniciar sesión: leer `.lupio/context/servers.md` (si existe) para conocer accesos
+y método de despliegue del proyecto. Mantener esa info en memoria durante toda la sesión.**
+
+**Antes de CUALQUIER operación que toque un servidor remoto** — incluyendo:
+- SSH/SCP/SFTP/rsync hacia servidor
+- Subir o actualizar archivos en producción/staging
+- Push/pull a repos remotos del servidor (no GitHub)
+- Ejecutar comandos en remoto (artisan/migrate en prod, etc)
+- Restart de servicios, reload de Nginx/Apache
+- Operaciones sobre DB remota (dump, restore, migrate)
+- Purga de CDN, cambios de DNS
+- Trigger de CI/CD pipelines (gh workflow run, GitLab pipelines)
+- Upload a S3/GCS/Azure Blob, cloud functions deploy
+
+→ **PREGUNTAR al usuario verbalmente primero:**
+```
+🔐 Operación de servidor detectada
+Acción: [descripción exacta]
+Servidor: [host / entorno: prod | staging | dev]
+Impacto: [reversible | irreversible | data loss potencial]
+¿Procedo? (sí / no / explica más)
+```
+
+**Reglas:**
+- La autorización es por operación, NUNCA permanente para la sesión
+- Si la operación toca producción → mostrar advertencia adicional en rojo (🔴 PROD)
+- Si no encuentras `.lupio/context/servers.md` y el usuario menciona algo de servidor
+  → ofrecer crearlo con plantilla antes de continuar
+- Si el archivo existe pero tiene info incompleta → pedirla al usuario, NO inventar
+
 ## No Commits / No Deploys (CRÍTICO — prioridad máxima absoluta)
 
 **Nunca, bajo ninguna circunstancia, ejecutar commits, push, tags de release o deploys.**
@@ -50,8 +82,9 @@ El usuario maneja todo eso manualmente y solo lo hace cuando él lo pide explíc
 1. **Ejecutar `git branch --show-current` y memorizar la rama (Git Branch Lock)**
 2. Read `context/project.md`
 3. Read `context/decisions.md` (first 30 lines)
-4. Run `bash .lupio/scripts/check-updates.sh` silently
-5. Greet: `📌 [project] | Branch: [branch] | Phase: [phase] | Last: [task] — What next?`
+4. Read `context/servers.md` if exists (Server Access Memory — keep in mind for the session)
+5. Run `bash .lupio/scripts/check-updates.sh` silently
+6. Greet: `📌 [project] | Branch: [branch] | Phase: [phase] | Last: [task] — What next?`
 
 ## Pre-flight de Permisos (máxima prioridad)
 Antes de ejecutar cualquier task, identificar TODAS las operaciones necesarias y solicitarlas en UN SOLO bloque:

@@ -479,6 +479,27 @@ If output = `UPDATE_AVAILABLE`, ask:
 - sí → `bash .lupio/scripts/apply-update.sh`
 - no → continue
 
+## Server Access & Operations (CRÍTICO — prioridad máxima)
+
+Al iniciar sesión: leer `.lupio/context/servers.md` (si existe) para conocer accesos
+y método de despliegue del proyecto. Mantener esa info en memoria durante la sesión.
+
+Antes de CUALQUIER operación que toque un servidor remoto (SSH, SCP, rsync, deploys,
+upload a S3/GCS, comandos remotos, restart de servicios, DB remota, CDN, DNS, CI/CD):
+
+→ PREGUNTAR al usuario primero:
+```
+🔐 Operación de servidor detectada
+Acción: [descripción]
+Servidor: [host / prod | staging | dev]
+Impacto: [reversible | irreversible | data loss]
+¿Procedo? (sí / no)
+```
+
+- La autorización es por operación, no permanente
+- Producción → advertencia adicional 🔴 PROD
+- Si no hay `servers.md` y se menciona servidor → ofrecer crearlo con plantilla
+
 ## No Commits / No Deploys (CRÍTICO — prioridad máxima absoluta)
 
 **Nunca, bajo ninguna circunstancia, ejecutar commits, push, tags de release o deploys.**
@@ -634,6 +655,17 @@ EOF
     success "Created decisions.md"
   else
     success "decisions.md already exists — skipped."
+  fi
+
+  # Servers template (only if missing) — copied from claude/prompts/servers-template.md
+  if [ ! -f "$LUPIO_DIR/context/servers.md" ]; then
+    if [ -f "$LUPIO_SRC/claude/prompts/servers-template.md" ]; then
+      cp "$LUPIO_SRC/claude/prompts/servers-template.md" "$LUPIO_DIR/context/servers.md"
+      sed -i.bak "s/\[Project Name\]/$project_name/" "$LUPIO_DIR/context/servers.md" && rm -f "$LUPIO_DIR/context/servers.md.bak"
+      success "Created servers.md (stub — fill with project access info)"
+    fi
+  else
+    success "servers.md already exists — skipped."
   fi
 }
 
