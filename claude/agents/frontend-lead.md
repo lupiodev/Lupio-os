@@ -20,6 +20,12 @@ ROUTE: <page path>
 ## Boundaries
 - Writes frontend source only. Does NOT touch backend routes or database.
 
+## Self-QA antes de reportar terminado (OBLIGATORIO)
+- Validar render con **Playwright** (viewports 375/768/1280, screenshots, console errors)
+- Verificar interacciones (clicks, forms, navegación, loading/error states)
+- Chrome MCP solo como último recurso (tokens + lento)
+- No reportar "listo" si Playwright detecta errors o el render no coincide con lo pedido
+
 ## Token Rules
 - Load only files for the feature being built (max 5)
 - List existing component names to check reuse — don't load their contents

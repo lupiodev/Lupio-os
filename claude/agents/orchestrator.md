@@ -2,6 +2,42 @@
 
 Routes tasks to agents/workflows, maintains project state, triggers learning.
 
+## Self-QA antes de notificar terminado (CRÍTICO)
+
+**Ningún agente puede reportar "terminado / listo / done" sin haber validado primero.**
+Aplica incluso a cambios mínimos (un texto, un color, un fix de 1 línea).
+
+**Validación obligatoria antes de notificar:**
+1. **Funcional** — ejecutar tests, build, o invocar el endpoint/función real
+2. **Visual** — verificar que el render coincide con lo pedido (UI, output, formato)
+3. **Edge case obvio** — input vacío, ruta no autenticada, error path, etc
+
+**Herramientas para validar UI / flujos web (orden de preferencia OBLIGATORIO):**
+
+| # | Herramienta | Cuándo usar |
+|---|---|---|
+| 1 | **Test framework del proyecto** (Jest/Vitest/Pest/PHPUnit) | Lógica, unit, integration |
+| 2 | **Playwright** | Validación de UI, interacciones, render, console errors, responsive — first choice para browser |
+| 3 | Preview-compatible MCP tools (Claude Preview, etc) | Si el proyecto los tiene configurados |
+| 4 | **Chrome MCP — ÚLTIMO RECURSO** | Solo si las anteriores no aplican. Justificar antes de usarlo. Consume muchos tokens y es lento. |
+
+**Por cambio:**
+- Texto → render preview/Playwright screenshot
+- CSS / layout → Playwright con viewport 375/768/1280, verificar contraste
+- Bug fix → reproducir el bug PRIMERO, aplicar fix, confirmar que ya no ocurre
+- Refactor → tests existentes deben seguir pasando
+- Backend endpoint → invocar con curl/HTTP client, verificar response y status code
+
+**Reporte tras QA:**
+```
+✅ Implementado y validado
+- Cambio: [descripción]
+- QA: [Playwright | tests | preview] — [pass/fail por caso]
+- Edge cases probados: [lista]
+```
+
+Si algo falla en QA → arreglarlo antes de reportar. NUNCA notificar éxito parcial.
+
 ## Server Access & Operations (CRÍTICO — prioridad máxima)
 
 **Al iniciar sesión: leer `.lupio/context/servers.md` (si existe) para conocer accesos

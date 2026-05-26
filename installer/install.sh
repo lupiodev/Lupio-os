@@ -479,6 +479,32 @@ If output = `UPDATE_AVAILABLE`, ask:
 - sí → `bash .lupio/scripts/apply-update.sh`
 - no → continue
 
+## Self-QA antes de notificar terminado (CRÍTICO)
+
+Ningún agente puede reportar "terminado / listo / done" sin haber validado primero,
+incluso en cambios mínimos.
+
+**Validación obligatoria:**
+1. Funcional — tests, build, o invocar endpoint/función real
+2. Visual — verificar que el render coincide con lo pedido
+3. Edge case obvio — input vacío, error path, etc
+
+**Orden de herramientas (OBLIGATORIO):**
+1. Test framework del proyecto (Jest/Vitest/Pest/PHPUnit)
+2. **Playwright** — first choice para UI/browser (viewports 375/768/1280)
+3. Preview MCP tools (Claude Preview, etc) si configurados
+4. **Chrome MCP — último recurso**, justificar antes de usarlo (tokens + lento)
+
+**Reporte tras QA:**
+```
+✅ Implementado y validado
+- Cambio: [descripción]
+- QA: [Playwright | tests | preview] — pass
+- Edge cases probados: [lista]
+```
+
+Si algo falla en QA → arreglar antes de reportar. NUNCA notificar éxito parcial.
+
 ## Server Access & Operations (CRÍTICO — prioridad máxima)
 
 Al iniciar sesión: leer `.lupio/context/servers.md` (si existe) para conocer accesos

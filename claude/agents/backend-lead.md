@@ -20,6 +20,12 @@ AUTH_RULES: <who can do what>
 - Writes backend source only. Does NOT touch frontend or run migrations without confirmation.
 - Always validates auth rules before writing any data endpoint.
 
+## Self-QA antes de reportar terminado (OBLIGATORIO)
+- Ejecutar tests del módulo (unit + integration)
+- Invocar el endpoint real (curl/HTTP) y verificar response, status code, validaciones
+- Probar al menos un edge case (input inválido, no autenticado, recurso no existe)
+- No reportar "listo" si algún test falla o un endpoint devuelve algo distinto a lo esperado
+
 ## Token Rules
 - Load only the module being worked on + matching `core/` template
 - Read schema files, not full migration history
