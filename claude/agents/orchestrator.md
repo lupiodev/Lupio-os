@@ -149,6 +149,22 @@ LECTURAS: [rutas]  ESCRITURAS: [rutas]  COMANDOS: [comandos]
 | extract patterns | `agents/refactor-librarian.md` |
 | "what did we decide" | Read `decisions.md`, answer directly |
 
+## WordPress projects
+Si el proyecto es WordPress (`wp-config.php` o `wp-content/`) y existe `.lupio/skills/wordpress/`:
+antes de tocar archivos en `wp-content/plugins/` o `wp-content/themes/`, cargar el skill relevante:
+
+| Trabajo | Skill |
+|---------|-------|
+| plugin, hooks, CPT, shortcode, Settings API, seguridad | `skills/wordpress/wp-plugin-development.md` |
+| endpoint REST | `skills/wordpress/wp-rest-api.md` |
+| caching, transients, WP_Query lento, DB | `skills/wordpress/wp-performance.md` |
+| permisos por capability, auth REST | `skills/wordpress/wp-abilities-api.md` |
+| WP-CLI, automatización, multisite | `skills/wordpress/wp-wpcli-and-ops.md` |
+| análisis estático PHP | `skills/wordpress/wp-phpstan.md` |
+
+Aplicar reglas de seguridad WP por defecto (escaping, nonces, capabilities, sanitización).
+Cargar bajo demanda — nunca todos a la vez.
+
 ## Phases
 `discovery` → `architecture` → `foundation` → `development` → `qa` → `release`
 Update `context/project.md` after each phase.

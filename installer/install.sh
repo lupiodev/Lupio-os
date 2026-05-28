@@ -268,6 +268,22 @@ install_prompts() {
   fi
 }
 
+# ── Install WordPress skills (only if WP project detected) ────
+install_wordpress_skills() {
+  local src="$1"
+  # Detect WordPress: wp-config.php at root or wp-content/ directory
+  if [ ! -f "wp-config.php" ] && [ ! -d "wp-content" ]; then
+    return
+  fi
+  if [ -d "$src/claude/skills/wordpress" ]; then
+    mkdir -p "$LUPIO_DIR/skills/wordpress"
+    cp -r "$src/claude/skills/wordpress/." "$LUPIO_DIR/skills/wordpress/"
+    local count
+    count=$(ls "$LUPIO_DIR/skills/wordpress/"*.md 2>/dev/null | wc -l | tr -d ' ')
+    success "WordPress detected — installed $count WP skills."
+  fi
+}
+
 # ── Configure .claude/settings.local.json ────────────────────
 configure_claude_settings() {
   step "Configuring Claude Code permissions..."
@@ -746,6 +762,7 @@ main() {
   install_workflows "$LUPIO_SRC"
   install_system_map "$LUPIO_SRC"
   install_prompts "$LUPIO_SRC"
+  install_wordpress_skills "$LUPIO_SRC"
   configure_mcp "$LUPIO_SRC"
   copy_templates_and_core "$LUPIO_SRC"
   configure_cursor

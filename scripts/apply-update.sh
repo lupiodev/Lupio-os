@@ -46,6 +46,15 @@ log "Actualizando prompts..."
 
 mkdir -p "$LUPIO_DIR/checkpoints"
 
+# WordPress skills — solo si el proyecto es WordPress
+if [ -f "wp-config.php" ] || [ -d "wp-content" ]; then
+  if [ -d "$TMP_DIR/claude/skills/wordpress" ]; then
+    log "WordPress detectado — actualizando WP skills..."
+    mkdir -p "$LUPIO_DIR/skills/wordpress"
+    cp -r "$TMP_DIR/claude/skills/wordpress/." "$LUPIO_DIR/skills/wordpress/"
+  fi
+fi
+
 log "Actualizando templates..."
 cp -r "$TMP_DIR/templates/."       "$LUPIO_DIR/templates/"
 
