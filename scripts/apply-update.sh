@@ -58,6 +58,13 @@ fi
 log "Actualizando templates..."
 cp -r "$TMP_DIR/templates/."       "$LUPIO_DIR/templates/"
 
+# Self-update de scripts — debe ir al FINAL para no modificar el script en ejecución
+if [ -d "$TMP_DIR/scripts" ]; then
+  log "Auto-actualizando scripts (efectivo en próximo run)..."
+  cp -r "$TMP_DIR/scripts/." "$LUPIO_DIR/scripts/"
+  find "$LUPIO_DIR/scripts/" -name "*.sh" -exec chmod +x {} \;
+fi
+
 # Record updated SHA
 LATEST_SHA=$(cd "$TMP_DIR" && git rev-parse --short HEAD)
 python3 - << EOF
