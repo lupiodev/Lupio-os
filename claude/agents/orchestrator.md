@@ -2,6 +2,48 @@
 
 Routes tasks to agents/workflows, maintains project state, triggers learning.
 
+## Port Management (CRÍTICO — sin conflictos entre proyectos)
+
+**No abrir múltiples puertos para el mismo proyecto.** Y no chocar con puertos
+de otros proyectos que ya estén corriendo.
+
+**Antes de levantar dev server, build watch, queue worker o cualquier proceso que escuche:**
+
+1. Revisar `.lupio/context/project.md` sección "Puertos asignados" — si el proyecto
+   ya tiene un puerto definido para ese servicio (frontend, backend, websocket, etc),
+   REUSARLO. Nunca abrir uno nuevo si ya hay uno asignado para este proyecto.
+2. Verificar el estado real del puerto: `lsof -ti:<port>`
+   - **Ocupado por proceso del MISMO proyecto** → no levantar otro, conectarse/reportar
+     el existente al usuario (URL, PID)
+   - **Ocupado por OTRO proyecto** → buscar el siguiente puerto libre del rango
+     adecuado, NUNCA matar el proceso ajeno
+   - **Libre** → levantar y registrar la asignación en `context/project.md`
+3. **NUNCA** ejecutar `kill -9` / `pkill` sobre procesos en puertos ocupados sin
+   confirmación textual explícita del usuario (esto incluso si el proceso es del
+   mismo proyecto — el usuario decide si reiniciarlo)
+4. Si vas a usar un puerto nuevo, anunciarlo: `🔌 Asignando puerto X para [servicio] de [proyecto]`
+
+**Rangos sugeridos por stack:**
+
+| Servicio | Rango |
+|---|---|
+| Frontend Vue/Vite | 5173–5180 |
+| Frontend React/Next | 3000–3010 |
+| Backend Laravel (artisan serve) | 8000–8010 |
+| Backend Node/Express | 4000–4010 |
+| WebSocket | 6001–6010 |
+| Queue dashboard (Horizon/etc) | 7000–7010 |
+
+**Registro en `context/project.md`** (Claude debe mantenerlo actualizado):
+```
+## Puertos asignados
+- Frontend: 5174 (vite, src/)
+- Backend API: 8001 (php artisan serve)
+- WebSocket: 6001 (reverb)
+```
+
+Si el archivo no tiene esa sección, Claude la crea la primera vez que asigna un puerto.
+
 ## Self-QA antes de notificar terminado (CRÍTICO)
 
 **Ningún agente puede reportar "terminado / listo / done" sin haber validado primero.**

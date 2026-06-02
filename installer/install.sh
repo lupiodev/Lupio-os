@@ -495,6 +495,25 @@ If output = `UPDATE_AVAILABLE`, ask:
 - sí → `bash .lupio/scripts/apply-update.sh`
 - no → continue
 
+## Port Management (CRÍTICO — sin conflictos entre proyectos)
+
+No abrir múltiples puertos para el mismo proyecto y no chocar con puertos de otros
+proyectos activos.
+
+**Antes de levantar dev server / build watch / cualquier proceso que escuche:**
+
+1. Revisar `.lupio/context/project.md` sección "Puertos asignados" — si ya hay puerto
+   asignado para ese servicio, REUSARLO
+2. `lsof -ti:<port>` para verificar estado real:
+   - Ocupado por MISMO proyecto → conectar al existente, no levantar otro
+   - Ocupado por OTRO proyecto → siguiente puerto libre del rango, NUNCA matar el ajeno
+   - Libre → levantar y registrar en `context/project.md`
+3. NUNCA `kill -9` / `pkill` sobre puertos ocupados sin confirmación textual del usuario
+4. Anunciar nueva asignación: `🔌 Asignando puerto X para [servicio] de [proyecto]`
+
+**Rangos por stack:** Vue/Vite 5173-5180 · React/Next 3000-3010 · Laravel 8000-8010 ·
+Node 4000-4010 · WebSocket 6001-6010 · Queue dashboards 7000-7010
+
 ## Self-QA antes de notificar terminado (CRÍTICO)
 
 Ningún agente puede reportar "terminado / listo / done" sin haber validado primero,
