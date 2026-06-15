@@ -577,6 +577,36 @@ Si el usuario pide explícitamente "haz commit" / "deploy esto":
 2. Solo con confirmación textual → proceder con esa única operación
 3. La confirmación NO es permiso permanente para la sesión
 
+## Branch Creation Policy (CRÍTICO — complementa Git Branch Lock)
+
+Antes de crear una rama nueva, ANALIZAR si realmente se necesita. No crear ramas por
+defecto en cada conversación. Regla por defecto: trabajar en la rama actual.
+
+**¿Amerita rama nueva?**
+- SÍ: feature nueva, fix significativo, refactor amplio, WIP de varias sesiones
+- NO: ajuste rápido, typo, una línea, lectura/exploración → rama actual
+
+**Si se justifica, ANUNCIAR primero y esperar confirmación textual:**
+```
+🌿 Propuesta de rama nueva
+Tipo: [feature | fix | hotfix | chore | refactor | docs | test]
+Nombre: <tipo>/<descriptor-kebab-case>
+Razón: [por qué amerita rama separada]
+Desde: <rama base actual>
+¿Apruebas? (sí / no / sugerir otro nombre)
+```
+
+**Naming (Git Flow):**
+- `feature/<descriptor>` · `fix/<descriptor>` · `hotfix/<descriptor>`
+- `refactor/<descriptor>` · `chore/<descriptor>` · `docs/<descriptor>`
+- `test/<descriptor>` · `release/<version>`
+
+**Reglas de nombre:** minúsculas, kebab-case, 3-6 palabras (≤50 chars), sin acentos
+ni caracteres especiales. Con ticket: `<tipo>/<ticket>-<descriptor>`.
+
+**PROHIBIDO:** `temp`, `test`, `wip`, `claude-changes`, `nueva-rama`, `branch-1`,
+nombres de autor, mezclas de idiomas/casing.
+
 ## Git Branch Lock (CRÍTICO — prioridad máxima absoluta)
 
 **Nunca cambies de rama, tree o worktree sin orden EXPLÍCITA y textual del usuario.**

@@ -136,6 +136,55 @@ El usuario maneja todo eso manualmente y solo lo hace cuando él lo pide explíc
 
 **Razón:** decisión del usuario para mantener control total del versionado y despliegue.
 
+## Branch Creation Policy (CRÍTICO — complementa Git Branch Lock)
+
+**Antes de crear una rama nueva, ANALIZAR si realmente se necesita.**
+No crear ramas por defecto en cada conversación o ventana nueva. La regla por defecto
+es: trabajar en la rama actual.
+
+**¿Amerita rama nueva?**
+- ✅ SÍ: feature nueva, fix de bug significativo, refactor amplio, WIP que tomará varias sesiones
+- ❌ NO: ajuste rápido, typo, una línea, exploración/lectura, cambio menor
+  → trabajar en la rama actual
+
+**Si se justifica una rama nueva, ANUNCIAR primero y esperar confirmación textual:**
+```
+🌿 Propuesta de rama nueva
+Tipo: [feature | fix | hotfix | chore | refactor | docs | test]
+Nombre propuesto: <tipo>/<descriptor-kebab-case>
+Razón: [por qué amerita rama separada]
+Desde: <rama base actual>
+
+¿Apruebas crear esta rama? (sí / no / sugerir otro nombre)
+```
+
+**Convención de naming (Git Flow):**
+
+| Tipo | Prefijo | Ejemplo |
+|------|---------|---------|
+| Feature nueva | `feature/` | `feature/dashboard-kpis` |
+| Bug fix | `fix/` | `fix/login-redirect-loop` |
+| Hotfix prod | `hotfix/` | `hotfix/payment-timeout` |
+| Refactor | `refactor/` | `refactor/auth-service` |
+| Chore / mantenimiento | `chore/` | `chore/update-dependencies` |
+| Documentación | `docs/` | `docs/api-onboarding` |
+| Tests | `test/` | `test/quotes-service-coverage` |
+| Release | `release/` | `release/v2.4.0` |
+
+**Reglas de nombre:**
+- Minúsculas, kebab-case (guiones, no underscores)
+- 3-6 palabras, descriptivo pero conciso (≤ 50 chars)
+- Sin emojis, sin acentos, sin caracteres especiales
+- Si hay ticket: `<tipo>/<ticket>-<descriptor>` (ej. `feature/CRM-123-bulk-invoice`)
+
+**PROHIBIDO crear ramas con nombres como:**
+- Genéricos sin contexto: `temp`, `test`, `wip`, `nueva-rama`, `branch-1`, `claude-changes`
+- Descriptivos del autor o tooling: `josesfeature`, `mybranch`, `claude/<algo>`
+- Mezclas de idiomas o casing: `feature/NuevaFunc`, `fix_loginBug`, `Feature/Login`
+
+**Antes de cualquier creación o cambio de rama: confirmar rama actual con
+`git branch --show-current` (ver Git Branch Lock).**
+
 ## Git Branch Lock (CRÍTICO — prioridad máxima absoluta)
 
 **Nunca cambies de rama, tree o worktree sin orden EXPLÍCITA y textual del usuario.**
