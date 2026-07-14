@@ -108,6 +108,7 @@ confirm_installation() {
   echo -e "  ${CYAN}.lupio/workflows/${NC}        9 development workflows"
   echo -e "  ${CYAN}.lupio/context/${NC}          project context (preserved if exists)"
   echo -e "  ${CYAN}.lupio/memory/${NC}           agent memory (preserved if exists)"
+  echo -e "  ${CYAN}.claude/skills/${NC}         5 Lupio skills (arranque standard, auto-loaded)"
   if [ "$EDITOR_CURSOR" = true ]; then
     echo -e "  ${CYAN}.cursor/${NC}               Cursor AI operating rules"
   fi
@@ -282,6 +283,26 @@ install_wordpress_skills() {
     count=$(ls "$LUPIO_DIR/skills/wordpress/"*.md 2>/dev/null | wc -l | tr -d ' ')
     success "WordPress detected — installed $count WP skills."
   fi
+}
+
+# ── Install Lupio skills (arranque standard — always) ─────────
+# Van a .claude/skills/ (NO .lupio/) porque las skills de Claude Code solo
+# auto-cargan desde ahí. Solo se tocan las carpetas lupio-*; el resto de
+# .claude/skills/ del proyecto se preserva.
+install_lupio_skills() {
+  local src="$1"
+  if [ ! -d "$src/.claude/skills" ]; then
+    warn "Lupio skills source not found."
+    return
+  fi
+  mkdir -p ".claude/skills"
+  local count=0
+  for skill_dir in "$src/.claude/skills/"lupio-*/; do
+    [ -d "$skill_dir" ] || continue
+    cp -r "$skill_dir" ".claude/skills/"
+    count=$((count + 1))
+  done
+  success "Installed $count Lupio skills to .claude/skills/ (arranque standard)."
 }
 
 # ── Configure .claude/settings.local.json ────────────────────
@@ -485,6 +506,24 @@ generate_claude_md() {
 # Lupio OS
 
 All system files live in `.lupio/`. Read `.lupio/context/project.md` before any task.
+
+## Estándar de arranque — Lupio skills (OBLIGATORIO, ANTES de escribir código)
+
+Al iniciar cualquier proyecto o feature, consulta estas skills (auto-cargan por
+sus disparadores; también `/nombre` para forzarlas). Viven en `.claude/skills/`.
+
+1. `lupio-arranque` — al arrancar un proyecto/MVP/repo nuevo: problema, usuario,
+   primera cosa visible, stack mínimo, Día 1.
+2. `lupio-plan` — SIEMPRE antes de tocar código en algo no trivial: explorar,
+   preguntas, pasos pequeños y reversibles, esperar OK.
+3. `lupio-seguridad` — antes de prod o al tocar auth/pagos/datos/uploads/endpoints.
+4. `lupio-fixer` — ante cualquier bug: reproducir → causa raíz → fix mínimo →
+   probar el caso exacto. Sin evidencia, no está arreglado.
+5. `lupio-abogado-diablo` — para decidir si una idea vale la pena: steelman →
+   ataque → riesgos → veredicto (seguir/cambiar/matar).
+
+Orden lógico: `abogado-diablo` (si dudas) → `arranque` (si es nuevo) → `plan` →
+código → `fixer` (si falla) → `seguridad` (antes de prod).
 
 ## Session Start
 
@@ -812,6 +851,7 @@ main() {
   install_system_map "$LUPIO_SRC"
   install_prompts "$LUPIO_SRC"
   install_wordpress_skills "$LUPIO_SRC"
+  install_lupio_skills "$LUPIO_SRC"
   configure_mcp "$LUPIO_SRC"
   copy_templates_and_core "$LUPIO_SRC"
   configure_cursor
