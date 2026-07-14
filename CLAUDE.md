@@ -35,6 +35,28 @@ Y en sus momentos:
 Estas skills auto-cargan por sus disparadores (frontmatter `description`). Viven
 en `.claude/skills/lupio-*/SKILL.md` y se instalan en cada proyecto.
 
+## Diseño de interfaces (PRIORIDAD al diseñar UI)
+
+Al diseñar/rediseñar cualquier interfaz, **`lupio-diseno` es prioritaria** e
+impone el orden jerárquico: idea → brief → arquitectura de información/flujos →
+tokens/sistema → layout/wireframe → componentes → motion → review. Enruta a las
+skills de diseño curadas (ver `.claude/skills/ATTRIBUTION.md` para fuentes y licencias):
+
+| Skill | Para | Origen |
+|-------|------|--------|
+| `lupio-diseno` | Conductor: orden jerárquico + routing (prioridad) | Lupio |
+| `frontend-design` | Dirección visual, tipografía, estructura, copy | Anthropic (Apache-2.0) |
+| `ui-ux-pro-max` | Reglas profesionales + checklist pre-entrega | WAAM (MIT, adaptada) |
+| `apple-design` | Motion físico, gestos, materiales | emilkowalski (MIT) |
+| `improve-animations` | Auditar/planear mejoras de motion | emilkowalski (MIT) |
+| `animation-vocabulary` | Nombrar un efecto de animación | emilkowalski (MIT) |
+| `review-animations` | Revisar motion de un diff | emilkowalski (MIT) |
+| `web-design-guidelines` | Auditar UI vs. Web Interface Guidelines | Vercel |
+
+Reglas: no saltar etapas · tokens antes que componentes · evitar defaults de IA ·
+QA visual con Playwright en 375/768/1280 (light y dark). Se apoya en los agentes
+`ux-reviewer` / `ui-reviewer` y en `/review-ux`.
+
 ### Cómo se invoca cada skill
 - **Automático:** cargan solas cuando tu mensaje coincide con sus disparadores
   (p. ej. "nuevo proyecto" → `lupio-arranque`; "hay un bug" → `lupio-fixer`).

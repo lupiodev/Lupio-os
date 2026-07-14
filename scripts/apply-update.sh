@@ -55,13 +55,14 @@ if [ -f "wp-config.php" ] || [ -d "wp-content" ]; then
   fi
 fi
 
-# Lupio skills (arranque standard) — van a .claude/skills/ para que auto-carguen
+# Lupio skills (arranque + diseño) — van a .claude/skills/ para que auto-carguen
 if [ -d "$TMP_DIR/.claude/skills" ]; then
   log "Actualizando Lupio skills (.claude/skills/)..."
   mkdir -p ".claude/skills"
-  for skill_dir in "$TMP_DIR/.claude/skills/"lupio-*/; do
+  for skill_dir in "$TMP_DIR/.claude/skills/"*/; do
     [ -d "$skill_dir" ] && cp -r "$skill_dir" ".claude/skills/"
   done
+  [ -f "$TMP_DIR/.claude/skills/ATTRIBUTION.md" ] && cp "$TMP_DIR/.claude/skills/ATTRIBUTION.md" ".claude/skills/"
 fi
 
 log "Actualizando templates..."

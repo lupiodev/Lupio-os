@@ -108,7 +108,7 @@ confirm_installation() {
   echo -e "  ${CYAN}.lupio/workflows/${NC}        9 development workflows"
   echo -e "  ${CYAN}.lupio/context/${NC}          project context (preserved if exists)"
   echo -e "  ${CYAN}.lupio/memory/${NC}           agent memory (preserved if exists)"
-  echo -e "  ${CYAN}.claude/skills/${NC}         5 Lupio skills (arranque standard, auto-loaded)"
+  echo -e "  ${CYAN}.claude/skills/${NC}         Lupio skills: arranque + diseño (auto-loaded)"
   if [ "$EDITOR_CURSOR" = true ]; then
     echo -e "  ${CYAN}.cursor/${NC}               Cursor AI operating rules"
   fi
@@ -285,10 +285,11 @@ install_wordpress_skills() {
   fi
 }
 
-# ── Install Lupio skills (arranque standard — always) ─────────
+# ── Install Lupio skills (arranque + diseño standard — always) ─
 # Van a .claude/skills/ (NO .lupio/) porque las skills de Claude Code solo
-# auto-cargan desde ahí. Solo se tocan las carpetas lupio-*; el resto de
-# .claude/skills/ del proyecto se preserva.
+# auto-cargan desde ahí. Copia todas las carpetas de skills del set Lupio; el
+# resto de .claude/skills/ propio del proyecto se preserva (solo se sobrescriben
+# las carpetas con el mismo nombre).
 install_lupio_skills() {
   local src="$1"
   if [ ! -d "$src/.claude/skills" ]; then
@@ -297,12 +298,14 @@ install_lupio_skills() {
   fi
   mkdir -p ".claude/skills"
   local count=0
-  for skill_dir in "$src/.claude/skills/"lupio-*/; do
+  for skill_dir in "$src/.claude/skills/"*/; do
     [ -d "$skill_dir" ] || continue
     cp -r "$skill_dir" ".claude/skills/"
     count=$((count + 1))
   done
-  success "Installed $count Lupio skills to .claude/skills/ (arranque standard)."
+  # ATTRIBUTION.md de las skills de diseño (licencias de terceros)
+  [ -f "$src/.claude/skills/ATTRIBUTION.md" ] && cp "$src/.claude/skills/ATTRIBUTION.md" ".claude/skills/"
+  success "Installed $count Lupio skills to .claude/skills/ (arranque + diseño standard)."
 }
 
 # ── Configure .claude/settings.local.json ────────────────────
@@ -524,6 +527,15 @@ sus disparadores; también `/nombre` para forzarlas). Viven en `.claude/skills/`
 
 Orden lógico: `abogado-diablo` (si dudas) → `arranque` (si es nuevo) → `plan` →
 código → `fixer` (si falla) → `seguridad` (antes de prod).
+
+## Diseño de interfaces — PRIORIDAD
+
+Al diseñar/rediseñar cualquier UI (pantalla, página, landing, dashboard,
+componente), `lupio-diseno` manda: impone el orden idea → brief → IA/flujos →
+tokens → layout → componentes → motion → review, y enruta a las skills de diseño
+(`frontend-design`, `ui-ux-pro-max`, `apple-design`, `improve-animations`,
+`animation-vocabulary`, `web-design-guidelines`). No saltes etapas; tokens antes
+que componentes; evita los defaults de IA; QA con Playwright en 375/768/1280.
 
 ## Session Start
 
