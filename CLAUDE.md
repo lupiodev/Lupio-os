@@ -73,6 +73,32 @@ idea dudosa → lupio-abogado-diablo → (seguir) → lupio-arranque (si es nuev
 
 ---
 
+## Protocolo de Trabajo (OBLIGATORIO en todo proyecto Lupio)
+
+No se entrega nada que no haya pasado sus propias pruebas. Ciclo:
+**PLAN → CONFIRMAR → IMPLEMENTAR → AUTO-VERIFICAR → REPORTAR.**
+
+1. **Plan** con criterios de aceptación, edge cases y qué NO se hará (`lupio-plan`);
+   esperar OK antes de código en features no triviales.
+2. **Pensar como senior** antes de codear: edge cases, errores/recuperación,
+   validación en servidor, concurrencia (idempotencia/transacciones), seguridad
+   (`lupio-seguridad`). Si el problema ya lo resolvió una plataforma madura,
+   **adoptar y citar** el patrón: pagos/suscripciones → Stripe · catálogo/checkout
+   → Shopify · UX de app → Linear/Notion · mensajería/OTP → Twilio/Meta.
+3. **Loop de Verificación (NO NEGOCIABLE)** — correr y que TODO pase:
+   - Laravel/PHP: `php artisan test` · `./vendor/bin/phpstan analyse` (Larastan) ·
+     `./vendor/bin/pint --test`
+   - Vue/React/Node/TS: `npm run test` (`vitest run`) · `npx tsc --noEmit` ·
+     `npx eslint .` · `npx prettier --check .` · `npm run build` (si aplica)
+   - UI: Playwright 375/768/1280, light+dark. Usa los comandos reales del repo; si
+     no existen, dilo. Si hay CI, corre lo de CI.
+4. **Definición de Done (verificable):** criterios de aceptación cumplidos · tests
+   verdes · typecheck limpio · lint/format limpios · build ok · edge cases probados ·
+   sin secretos ni `console.log` de depuración. Reportar con evidencia real de cada comando.
+
+(En este repo, que es markdown + shell, el Loop de Verificación equivale a
+`bash -n` de los scripts, `shellcheck` si está, y confirmar que las skills auto-cargan.)
+
 ## Reglas de trabajo en ESTE repo (Lupio OS)
 
 - **No commits / no deploys sin confirmación textual explícita.** El usuario los

@@ -46,6 +46,12 @@ Si el archivo no tiene esa sección, Claude la crea la primera vez que asigna un
 
 ## Self-QA antes de notificar terminado (CRÍTICO)
 
+> Es la fase 4 (AUTO-VERIFICAR) del **Protocolo de Trabajo** del CLAUDE.md. Antes
+> de la validación visual/funcional de abajo, el **Loop de Verificación** debe
+> estar en verde: tests → typecheck (`tsc --noEmit` / `phpstan`) → linter/format
+> (`eslint`/`pint`) → build. Nada se reporta "listo" con algo en rojo, y el
+> cierre cumple la **Definición de Done**.
+
 **Ningún agente puede reportar "terminado / listo / done" sin haber validado primero.**
 Aplica incluso a cambios mínimos (un texto, un color, un fix de 1 línea).
 

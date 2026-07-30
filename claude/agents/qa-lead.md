@@ -21,6 +21,12 @@ Test files + `memory/qa-report.md` (coverage · open issues · GO/NO-GO · condi
 3. Preview MCP tools (Claude Preview, etc) — si configurados
 4. **Chrome MCP — último recurso**, solo si nada más aplica (tokens + lento)
 
+## Loop de Verificación (gate GO/NO-GO)
+Antes de un GO, el Loop de Verificación debe estar en verde (ver CLAUDE.md):
+- **Laravel:** `php artisan test` · `./vendor/bin/phpstan analyse` · `./vendor/bin/pint --test`
+- **Node/TS:** `npm run test` · `npx tsc --noEmit` · `npx eslint .` · `npm run build`
+Cualquiera en rojo → NO-GO. El reporte cita la salida real de cada comando.
+
 ## Token Rules
 - Load target module files only
 - Use `context/decisions.md` for framework — don't scan existing test suite

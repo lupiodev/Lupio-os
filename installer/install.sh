@@ -528,6 +528,92 @@ sus disparadores; también `/nombre` para forzarlas). Viven en `.claude/skills/`
 Orden lógico: `abogado-diablo` (si dudas) → `arranque` (si es nuevo) → `plan` →
 código → `fixer` (si falla) → `seguridad` (antes de prod).
 
+## Protocolo de Trabajo (OBLIGATORIO — el ciclo de toda tarea)
+
+No entrego nada que no haya pasado mis propias pruebas. Toda tarea no trivial
+sigue este ciclo, en orden:
+
+1. **PLAN** — Antes de escribir código: explorar el código real y entregar un
+   plan con (a) problema real, (b) enfoque mínimo, (c) **criterios de aceptación
+   verificables**, (d) edge cases/errores/validaciones a cubrir, (e) qué NO haré.
+   Usa la skill `lupio-plan`. En cambios triviales (typo, 1 línea) basta una frase.
+2. **CONFIRMAR** — Esperar el OK del usuario al plan antes de tocar código
+   (features no triviales).
+3. **IMPLEMENTAR** — El corte mínimo que cumple los criterios de aceptación.
+   Sin refactors oportunistas.
+4. **AUTO-VERIFICAR** — Correr el Loop de Verificación completo (abajo). Si algo
+   falla, arreglar y volver a correr desde el inicio. No avanzo con nada en rojo.
+5. **REPORTAR** — Solo cuando se cumple la Definición de Done, con evidencia real.
+
+## Loop de Verificación (REGLA NO NEGOCIABLE)
+
+Una tarea NO está terminada hasta correr, en este orden, y que TODO pase:
+**tests → typecheck → linter/format → build (si aplica)**. Si algo falla, se
+arregla y se vuelve a correr desde el inicio. Nunca reportar "listo" con algo en rojo.
+
+Usa los comandos reales del repo (revisa `composer.json` / `package.json` / config
+de CI). Si un comando no existe en el proyecto, dilo — no lo inventes.
+
+**Laravel / PHP**
+- Tests: `php artisan test` (o `./vendor/bin/pest`)
+- Static analysis: `./vendor/bin/phpstan analyse` (Larastan)
+- Lint/format: `./vendor/bin/pint --test` (formatear: `./vendor/bin/pint`)
+- Migraciones: `php artisan migrate --pretend` antes de aplicar
+
+**Vue / React / Node / TypeScript**
+- Tests: `npm run test` (`vitest run` / `jest`)
+- Typecheck: `npx tsc --noEmit`
+- Lint: `npx eslint .` (o `npm run lint`)
+- Format: `npx prettier --check .`
+- Build: `npm run build` (si el cambio afecta build/SSR)
+
+**UI / navegador**
+- Playwright en 375/768/1280, verificar console errors, light y dark (ver Self-QA).
+
+Regla: prefiere el script del proyecto (`npm run lint`, `composer test`) sobre el
+binario suelto. Si el repo tiene CI, corre lo mismo que corre CI.
+
+## Pensar como Senior (antes de codear)
+
+No implementar solo el happy path. Antes de escribir, responder en el plan:
+- **Edge cases:** input vacío/nulo/enorme/duplicado, listas vacías, timezone, unicode.
+- **Errores y recuperación:** timeouts, red caída, respuestas 4xx/5xx.
+- **Validación:** toda entrada validada en servidor (no confiar en el cliente).
+- **Concurrencia:** doble submit, race conditions, idempotencia, transacciones/locks.
+- **Seguridad:** authz además de authn, IDOR, inyección, secretos, PII en logs
+  (skill `lupio-seguridad`).
+
+**Patrones probados antes de inventar** — si el problema ya está resuelto por una
+plataforma madura, adopta ese patrón y **cítalo en el plan**:
+- Pagos / suscripciones → **Stripe** (idempotency keys, webhooks firmados, estados
+  de suscripción, reintentos).
+- Catálogo / carrito / checkout → **Shopify**.
+- UX de app / navegación / atajos / comandos → **Linear**, **Notion**.
+- Mensajería / notificaciones / OTP → **Twilio**, **Meta** (WhatsApp Cloud API).
+
+Inventa un enfoque propio solo si ninguno encaja, y explica por qué.
+
+## Definición de Done (verificable, no subjetiva)
+
+Una tarea está Done SOLO si TODO esto es cierto y demostrable:
+- [ ] Cumple los criterios de aceptación del plan.
+- [ ] Tests relevantes escritos/actualizados y en verde.
+- [ ] Typecheck sin errores (`tsc --noEmit` / `phpstan`).
+- [ ] Linter y formato limpios (`eslint`/`prettier` / `pint`).
+- [ ] Build pasa (si el cambio lo afecta).
+- [ ] Edge cases del plan cubiertos y probados.
+- [ ] UI verificada en 375/768/1280 (light + dark) si hubo cambios visuales.
+- [ ] Sin secretos, sin `console.log` de depuración, sin TODO sin registrar.
+
+Reporte final (con evidencia real, no "debería funcionar"):
+```
+✅ Done — [tarea]
+- Criterios de aceptación: [cumplidos]
+- Verificación: tests [pass] · typecheck [clean] · lint [clean] · build [ok]
+- Edge cases probados: [lista]
+- Evidencia: [output de los comandos]
+```
+
 ## Diseño de interfaces — PRIORIDAD
 
 Al diseñar/rediseñar cualquier UI (pantalla, página, landing, dashboard,
@@ -566,6 +652,11 @@ proyectos activos.
 Node 4000-4010 · WebSocket 6001-6010 · Queue dashboards 7000-7010
 
 ## Self-QA antes de notificar terminado (CRÍTICO)
+
+> Es la fase 4 (AUTO-VERIFICAR) del Protocolo de Trabajo. Complementa —no
+> reemplaza— el Loop de Verificación (tests → typecheck → linter → build) y la
+> Definición de Done. El detalle de abajo aplica sobre todo a la validación
+> visual/funcional en navegador.
 
 Ningún agente puede reportar "terminado / listo / done" sin haber validado primero,
 incluso en cambios mínimos.
