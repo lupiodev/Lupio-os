@@ -2,232 +2,29 @@
 
 Routes tasks to agents/workflows, maintains project state, triggers learning.
 
-## Port Management (CRÍTICO — sin conflictos entre proyectos)
+## Reglas núcleo — viven en CLAUDE.md (no se duplican aquí)
 
-**No abrir múltiples puertos para el mismo proyecto.** Y no chocar con puertos
-de otros proyectos que ya estén corriendo.
+Las reglas CRÍTICAS de gobernanza están en el `CLAUDE.md` del proyecto y aplican
+siempre. El orchestrator las respeta sin repetirlas (dedup = ahorro de tokens):
 
-**Antes de levantar dev server, build watch, queue worker o cualquier proceso que escuche:**
+- **Protocolo de Trabajo** (PLAN → CONFIRMAR → IMPLEMENTAR → AUTO-VERIFICAR → REPORTAR)
+- **Loop de Verificación** (tests → typecheck → linter/format → build) y **Definición de Done**
+- **Self-QA** antes de notificar terminado
+- **Pensar como Senior** (edge cases + adoptar patrones probados: Stripe/Shopify/Linear/Twilio)
+- **Port Management** · **Server Access & Operations** · **No Commits / No Deploys**
+- **Branch Creation Policy** · **Git Branch Lock** · **Pre-flight de Permisos**
+- **Análisis Pre-Ejecución** (ver criterios de modelo/ventana abajo)
 
-1. Revisar `.lupio/context/project.md` sección "Puertos asignados" — si el proyecto
-   ya tiene un puerto definido para ese servicio (frontend, backend, websocket, etc),
-   REUSARLO. Nunca abrir uno nuevo si ya hay uno asignado para este proyecto.
-2. Verificar el estado real del puerto: `lsof -ti:<port>`
-   - **Ocupado por proceso del MISMO proyecto** → no levantar otro, conectarse/reportar
-     el existente al usuario (URL, PID)
-   - **Ocupado por OTRO proyecto** → buscar el siguiente puerto libre del rango
-     adecuado, NUNCA matar el proceso ajeno
-   - **Libre** → levantar y registrar la asignación en `context/project.md`
-3. **NUNCA** ejecutar `kill -9` / `pkill` sobre procesos en puertos ocupados sin
-   confirmación textual explícita del usuario (esto incluso si el proceso es del
-   mismo proyecto — el usuario decide si reiniciarlo)
-4. Si vas a usar un puerto nuevo, anunciarlo: `🔌 Asignando puerto X para [servicio] de [proyecto]`
-
-**Rangos sugeridos por stack:**
-
-| Servicio | Rango |
-|---|---|
-| Frontend Vue/Vite | 5173–5180 |
-| Frontend React/Next | 3000–3010 |
-| Backend Laravel (artisan serve) | 8000–8010 |
-| Backend Node/Express | 4000–4010 |
-| WebSocket | 6001–6010 |
-| Queue dashboard (Horizon/etc) | 7000–7010 |
-
-**Registro en `context/project.md`** (Claude debe mantenerlo actualizado):
-```
-## Puertos asignados
-- Frontend: 5174 (vite, src/)
-- Backend API: 8001 (php artisan serve)
-- WebSocket: 6001 (reverb)
-```
-
-Si el archivo no tiene esa sección, Claude la crea la primera vez que asigna un puerto.
-
-## Self-QA antes de notificar terminado (CRÍTICO)
-
-> Es la fase 4 (AUTO-VERIFICAR) del **Protocolo de Trabajo** del CLAUDE.md. Antes
-> de la validación visual/funcional de abajo, el **Loop de Verificación** debe
-> estar en verde: tests → typecheck (`tsc --noEmit` / `phpstan`) → linter/format
-> (`eslint`/`pint`) → build. Nada se reporta "listo" con algo en rojo, y el
-> cierre cumple la **Definición de Done**.
-
-**Ningún agente puede reportar "terminado / listo / done" sin haber validado primero.**
-Aplica incluso a cambios mínimos (un texto, un color, un fix de 1 línea).
-
-**Validación obligatoria antes de notificar:**
-1. **Funcional** — ejecutar tests, build, o invocar el endpoint/función real
-2. **Visual** — verificar que el render coincide con lo pedido (UI, output, formato)
-3. **Edge case obvio** — input vacío, ruta no autenticada, error path, etc
-
-**Herramientas para validar UI / flujos web (orden de preferencia OBLIGATORIO):**
-
-| # | Herramienta | Cuándo usar |
-|---|---|---|
-| 1 | **Test framework del proyecto** (Jest/Vitest/Pest/PHPUnit) | Lógica, unit, integration |
-| 2 | **Playwright** | Validación de UI, interacciones, render, console errors, responsive — first choice para browser |
-| 3 | Preview-compatible MCP tools (Claude Preview, etc) | Si el proyecto los tiene configurados |
-| 4 | **Chrome MCP — ÚLTIMO RECURSO** | Solo si las anteriores no aplican. Justificar antes de usarlo. Consume muchos tokens y es lento. |
-
-**Por cambio:**
-- Texto → render preview/Playwright screenshot
-- CSS / layout → Playwright con viewport 375/768/1280, verificar contraste
-- Bug fix → reproducir el bug PRIMERO, aplicar fix, confirmar que ya no ocurre
-- Refactor → tests existentes deben seguir pasando
-- Backend endpoint → invocar con curl/HTTP client, verificar response y status code
-
-**Reporte tras QA:**
-```
-✅ Implementado y validado
-- Cambio: [descripción]
-- QA: [Playwright | tests | preview] — [pass/fail por caso]
-- Edge cases probados: [lista]
-```
-
-Si algo falla en QA → arreglarlo antes de reportar. NUNCA notificar éxito parcial.
-
-## Server Access & Operations (CRÍTICO — prioridad máxima)
-
-**Al iniciar sesión: leer `.lupio/context/servers.md` (si existe) para conocer accesos
-y método de despliegue del proyecto. Mantener esa info en memoria durante toda la sesión.**
-
-**Antes de CUALQUIER operación que toque un servidor remoto** — incluyendo:
-- SSH/SCP/SFTP/rsync hacia servidor
-- Subir o actualizar archivos en producción/staging
-- Push/pull a repos remotos del servidor (no GitHub)
-- Ejecutar comandos en remoto (artisan/migrate en prod, etc)
-- Restart de servicios, reload de Nginx/Apache
-- Operaciones sobre DB remota (dump, restore, migrate)
-- Purga de CDN, cambios de DNS
-- Trigger de CI/CD pipelines (gh workflow run, GitLab pipelines)
-- Upload a S3/GCS/Azure Blob, cloud functions deploy
-
-→ **PREGUNTAR al usuario verbalmente primero:**
-```
-🔐 Operación de servidor detectada
-Acción: [descripción exacta]
-Servidor: [host / entorno: prod | staging | dev]
-Impacto: [reversible | irreversible | data loss potencial]
-¿Procedo? (sí / no / explica más)
-```
-
-**Reglas:**
-- La autorización es por operación, NUNCA permanente para la sesión
-- Si la operación toca producción → mostrar advertencia adicional en rojo (🔴 PROD)
-- Si no encuentras `.lupio/context/servers.md` y el usuario menciona algo de servidor
-  → ofrecer crearlo con plantilla antes de continuar
-- Si el archivo existe pero tiene info incompleta → pedirla al usuario, NO inventar
-
-## No Commits / No Deploys (CRÍTICO — prioridad máxima absoluta)
-
-**Nunca, bajo ninguna circunstancia, ejecutar commits, push, tags de release o deploys.**
-El usuario maneja todo eso manualmente y solo lo hace cuando él lo pide explícitamente.
-
-**Bloqueado siempre:**
-- `git commit` / `git commit -am` / `git commit --amend`
-- `git push` / `git push --force` / cualquier variante de push
-- `git tag` / `git tag -a` (tags de release)
-- Deploys: `vercel`, `netlify deploy`, `flyctl deploy`, `fly deploy`, `railway up`,
-  `firebase deploy`, `gcloud app deploy`, `gcloud run deploy`, `eb deploy`,
-  `pm2 deploy`, `serverless deploy`, `sls deploy`, `npm publish`, `yarn publish`
-- CI triggers: `gh workflow run`, `gh release create`
-- Kubernetes: `kubectl apply`
-
-**Permitido:** `git add`, `git status`, `git diff`, `git log` (staging y consulta sí, persistir/desplegar NO).
-
-**Si el usuario pide explícitamente "haz commit" o "deploy esto":**
-1. Recordarle: "Tienes deshabilitados commits/deploys automáticos. ¿Confirmas que quieres que YO lo ejecute en esta sesión?"
-2. Solo si confirma textualmente → proceder con esa única operación
-3. NO tomar la confirmación como permiso permanente para la sesión
-
-**Razón:** decisión del usuario para mantener control total del versionado y despliegue.
-
-## Branch Creation Policy (CRÍTICO — complementa Git Branch Lock)
-
-**Antes de crear una rama nueva, ANALIZAR si realmente se necesita.**
-No crear ramas por defecto en cada conversación o ventana nueva. La regla por defecto
-es: trabajar en la rama actual.
-
-**¿Amerita rama nueva?**
-- ✅ SÍ: feature nueva, fix de bug significativo, refactor amplio, WIP que tomará varias sesiones
-- ❌ NO: ajuste rápido, typo, una línea, exploración/lectura, cambio menor
-  → trabajar en la rama actual
-
-**Si se justifica una rama nueva, ANUNCIAR primero y esperar confirmación textual:**
-```
-🌿 Propuesta de rama nueva
-Tipo: [feature | fix | hotfix | chore | refactor | docs | test]
-Nombre propuesto: <tipo>/<descriptor-kebab-case>
-Razón: [por qué amerita rama separada]
-Desde: <rama base actual>
-
-¿Apruebas crear esta rama? (sí / no / sugerir otro nombre)
-```
-
-**Convención de naming (Git Flow):**
-
-| Tipo | Prefijo | Ejemplo |
-|------|---------|---------|
-| Feature nueva | `feature/` | `feature/dashboard-kpis` |
-| Bug fix | `fix/` | `fix/login-redirect-loop` |
-| Hotfix prod | `hotfix/` | `hotfix/payment-timeout` |
-| Refactor | `refactor/` | `refactor/auth-service` |
-| Chore / mantenimiento | `chore/` | `chore/update-dependencies` |
-| Documentación | `docs/` | `docs/api-onboarding` |
-| Tests | `test/` | `test/quotes-service-coverage` |
-| Release | `release/` | `release/v2.4.0` |
-
-**Reglas de nombre:**
-- Minúsculas, kebab-case (guiones, no underscores)
-- 3-6 palabras, descriptivo pero conciso (≤ 50 chars)
-- Sin emojis, sin acentos, sin caracteres especiales
-- Si hay ticket: `<tipo>/<ticket>-<descriptor>` (ej. `feature/CRM-123-bulk-invoice`)
-
-**PROHIBIDO crear ramas con nombres como:**
-- Genéricos sin contexto: `temp`, `test`, `wip`, `nueva-rama`, `branch-1`, `claude-changes`
-- Descriptivos del autor o tooling: `josesfeature`, `mybranch`, `claude/<algo>`
-- Mezclas de idiomas o casing: `feature/NuevaFunc`, `fix_loginBug`, `Feature/Login`
-
-**Antes de cualquier creación o cambio de rama: confirmar rama actual con
-`git branch --show-current` (ver Git Branch Lock).**
-
-## Git Branch Lock (CRÍTICO — prioridad máxima absoluta)
-
-**Nunca cambies de rama, tree o worktree sin orden EXPLÍCITA y textual del usuario.**
-
-1. Al iniciar sesión: ejecutar `git branch --show-current` y registrar la rama inicial
-2. Incluir la rama en el saludo: `📌 [project] | Branch: [X] | Phase: [phase] | ...`
-3. Antes de CUALQUIER `git commit`, `git push`, `git checkout`, `git switch`, `git worktree`, `git rebase`:
-   - Verificar con `git branch --show-current` que sigue siendo la rama inicial
-   - Si cambió inesperadamente → ABORTAR y alertar al usuario antes de continuar
-4. NUNCA ejecutar sin pedido explícito del usuario:
-   - `git checkout <otra-rama>` / `git switch <rama>`
-   - `git checkout -b <nueva>` / `git switch -c <nueva>`
-   - `git worktree add` / `git worktree remove`
-   - `git stash` seguido de cambio de rama
-5. Si el usuario pide cambiar de rama → confirmar verbalmente primero:
-   `"Vas a cambiar de [X] a [Y]. Trabajo no commiteado: [N archivos]. ¿Confirmas?"`
-6. Si una operación REQUIERE crear rama (ej. PR), pedir permiso explícito antes
-
-**Razón:** se reportó pérdida de trabajo en 2 proyectos (2026-05-13) por cambio inadvertido de rama. Esta regla protege contra esa clase de error.
+→ Ante cualquier duda de gobernanza, leer la sección correspondiente del `CLAUDE.md`.
+No repitas estas reglas en tus respuestas; aplícalas.
 
 ## Session Start
-1. **Ejecutar `git branch --show-current` y memorizar la rama (Git Branch Lock)**
+1. **`git branch --show-current` y memorizar la rama** (Git Branch Lock del CLAUDE.md)
 2. Read `context/project.md`
 3. Read `context/decisions.md` (first 30 lines)
-4. Read `context/servers.md` if exists (Server Access Memory — keep in mind for the session)
+4. Read `context/servers.md` if exists (mantener en mente durante la sesión)
 5. Run `bash .lupio/scripts/check-updates.sh` silently
 6. Greet: `📌 [project] | Branch: [branch] | Phase: [phase] | Last: [task] — What next?`
-
-## Pre-flight de Permisos (máxima prioridad)
-Antes de ejecutar cualquier task, identificar TODAS las operaciones necesarias y solicitarlas en UN SOLO bloque:
-```
-LECTURAS: [rutas]  ESCRITURAS: [rutas]  COMANDOS: [comandos]
-¿Apruebas todo? Procedo sin interrupciones.
-```
-- Nunca pedir permisos uno por uno durante la ejecución
-- Si surge operación no prevista, agrupar con pendientes y pedir en bloque
-- Una vez aprobado, ejecutar todo hasta terminar sin volver a interrumpir
 
 ## Routing
 
@@ -237,6 +34,7 @@ LECTURAS: [rutas]  ESCRITURAS: [rutas]  COMANDOS: [comandos]
 | architecture / stack | `workflows/architecture.md` |
 | backend module | `workflows/backend-module.md` |
 | frontend / UI / page | `workflows/frontend-module.md` |
+| diseño de interfaz / rediseño | skill `lupio-diseno` (conductor, prioridad) |
 | tests | `workflows/testing.md` |
 | review code / PR | `workflows/code-review.md` |
 | CI/CD / deploy | `workflows/devops.md` |
@@ -272,68 +70,16 @@ If found, ask: `💡 Lupio OS aprendió algo nuevo. ¿Actualizo? (sí/no)`
 - sí → `bash .lupio/scripts/auto-contribute.sh`
 - no → skip, don't ask again this session
 
-## Análisis Pre-Ejecución (CRÍTICO — antes de tocar código)
-
-Ante cualquier solicitud de cambio o nueva funcionalidad, **responder PRIMERO con este análisis:**
-
-```
-🔍 ANÁLISIS LUPIO OS — [MÓDULO]
-
-📊 SCOPE
-├─ Archivos a tocar: ~[X]  |  Archivos de referencia: ~[X]
-├─ Líneas estimadas: ~[X,XXX]
-├─ Tokens entrada: ~[X,XXX]  |  Tokens salida: ~[X,XXX]
-├─ Complejidad: [Baja/Media/Alta]
-└─ Modelo ideal: [Sonnet | Opus | Híbrido]
-
-⚠️ ALERTA [🟢 BAJO | 🟡 MEDIO | 🔴 ALTO]
-├─ Contexto: [Suficiente | Insuficiente | NUEVA VENTANA recomendada]
-└─ Decision: ¿Continuar aquí o abrir nueva ventana?
-
-🎯 RECOMENDACIÓN
-├─ Opción A: [descripción + tokens + tiempo]
-├─ Opción B: [alternativa]
-└─ Voy por [X] porque...
-
-Responde "Adelante" para proceder o "Nueva ventana" para exportar contexto.
-```
-
-### Criterios de alerta
-
-**Nueva ventana recomendada (🔴):**
-- Contexto acumulado > 20,000 tokens
-- Archivos únicos > 15 o archivos muy grandes
-- Cambios en 3+ módulos distintos
-- Breaking changes o refactors arquitectónicos
-- Más de 5 cambios en esta sesión
-
-**Continuar aquí (🟢):**
-- Contexto < 10,000 tokens
-- 1-2 módulos máximo
-- Cambios puntuales (< 5 archivos)
-- Coherencia beneficiada por continuidad
-
-### Modelo recomendado
-- **Sonnet** — default, 70% de los casos (features, ajustes, bugs normales)
-- **Opus** — arquitectura crítica, refactors grandes, debugging complejo
-- **Nunca Opus para** Tailwind tweaks, textos, cambios pequeños
-
-### Excepciones
-- `"Ignora análisis, adelante"` → respeta, pero loguea el riesgo brevemente
-- `"Usa Opus sin importar costo"` → ok, pero alerta proyección
-- `"Nueva ventana"` → ejecutar `/context-save` para generar checkpoint, indicar al usuario que abra nueva ventana y ejecute `/context-restore`
-
-### Reporte de sesión
-Al finalizar una sesión de trabajo, reportar:
-```
-📈 SESIÓN [MÓDULO] — Resumen
-Cambios: [X] | Tokens aprox: ~[X,XXX] | Modelo: [Sonnet/Opus]
-Proyección mes: [OK | Advertencia | Riesgo]
-```
+## Model routing (default barato → caro)
+- **Haiku** — tareas mecánicas: rename, mover archivos, formato, textos, regex, edits de 1 línea, listar/leer
+- **Sonnet** — default (~70%): features, ajustes, bugs normales, UI
+- **Opus** — solo arquitectura crítica, refactors grandes, debugging complejo
+- Nunca Opus para tweaks. Ver "Análisis Pre-Ejecución" en CLAUDE.md para el detalle de ventana/modelo.
 
 ## Token Rules
-- Sonnet es el modelo default — Opus solo para tareas pesadas justificadas
 - Load only `context/project.md` + first 30 lines of `context/decisions.md` at startup
 - Pass summaries between agents, not file contents
 - Max 10 files in context. Write overflow to `memory/`
+- El agente que implementa corre el Loop de Verificación UNA vez y guarda evidencia;
+  `qa-lead` **revisa la evidencia**, no re-ejecuta toda la suite (evita doble corrida)
 - Estimación rápida: 1 archivo (200 líneas) ≈ 500 tokens | 1 línea código ≈ 2.5 tokens
