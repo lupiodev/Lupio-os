@@ -8,3 +8,8 @@
 - prompt-changelog.md
 - reusable-candidates.md
 - postmortem.md
+
+## 2026-09-07 — Goldden 2.0
+- prompt-changelog.md
+- reusable-candidates.md
+- postmortem.md
