@@ -91,7 +91,7 @@ if [ -d "$TMP_DIR/.claude/skills" ]; then
   log "Actualizando Lupio skills (.claude/skills/)..."
   mkdir -p ".claude/skills"
   for skill_dir in "$TMP_DIR/.claude/skills/"*/; do
-    [ -d "$skill_dir" ] && cp -r "$skill_dir" ".claude/skills/"
+    [ -d "$skill_dir" ] && cp -r "${skill_dir%/}" ".claude/skills/"
   done
   [ -f "$TMP_DIR/.claude/skills/ATTRIBUTION.md" ] && cp "$TMP_DIR/.claude/skills/ATTRIBUTION.md" ".claude/skills/"
 fi

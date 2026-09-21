@@ -300,7 +300,7 @@ install_lupio_skills() {
   local count=0
   for skill_dir in "$src/.claude/skills/"*/; do
     [ -d "$skill_dir" ] || continue
-    cp -r "$skill_dir" ".claude/skills/"
+    cp -r "${skill_dir%/}" ".claude/skills/"
     count=$((count + 1))
   done
   # ATTRIBUTION.md de las skills de diseño (licencias de terceros)
