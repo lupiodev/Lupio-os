@@ -13,3 +13,8 @@
 - prompt-changelog.md
 - reusable-candidates.md
 - postmortem.md
+
+## 2026-11-03 — Mydessk 3.0
+- prompt-changelog.md
+- reusable-candidates.md
+- postmortem.md
