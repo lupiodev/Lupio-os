@@ -1,3 +1,8 @@
+---
+name: learning-agent
+description: "Captures lessons, extracts patterns, updates Lupio OS after project work."
+---
+
 # Agent: Learning Agent
 
 Captures lessons, extracts patterns, updates Lupio OS after project work.

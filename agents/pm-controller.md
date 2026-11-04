@@ -1,3 +1,8 @@
+---
+name: pm-controller
+description: "Manages scope, milestones, decisions, and flags scope creep."
+---
+
 # Agent: PM Controller
 
 Manages scope, milestones, decisions, and flags scope creep.

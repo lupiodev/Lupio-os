@@ -2,7 +2,8 @@
 set -euo pipefail
 # ============================================================
 # Lupio OS — Apply Update
-# Downloads latest agents, commands, skills, templates, core.
+# v2: agentes, comandos y skills llegan por el plugin `lupio-os`.
+# Este script actualiza el plugin y refresca .lupio/ (workflows, templates, core).
 # Preserves all project memory, context — and CLAUDE.md by default.
 # Cada update hace un backup reversible en .lupio/checkpoints/.
 #
@@ -46,22 +47,26 @@ STAMP=$(date -u +"%Y%m%d-%H%M%S")
 BACKUP_DIR="$LUPIO_DIR/checkpoints/backup-$STAMP"
 mkdir -p "$BACKUP_DIR"
 log "Backup reversible en $BACKUP_DIR ..."
-for d in agents commands workflows prompts core templates scripts skills; do
+for d in workflows prompts core templates scripts skills; do
   [ -d "$LUPIO_DIR/$d" ] && cp -r "$LUPIO_DIR/$d" "$BACKUP_DIR/" 2>/dev/null || true
 done
-if [ -d ".claude/skills" ]; then
-  mkdir -p "$BACKUP_DIR/claude-skills"
-  cp -r ".claude/skills/." "$BACKUP_DIR/claude-skills/" 2>/dev/null || true
-fi
 [ -f "CLAUDE.md" ] && cp "CLAUDE.md" "$BACKUP_DIR/CLAUDE.md" 2>/dev/null || true
 # Conservar solo los últimos 5 backups (evita crecimiento indefinido)
 ls -dt "$LUPIO_DIR/checkpoints/backup-"* 2>/dev/null | tail -n +6 | xargs rm -rf 2>/dev/null || true
 
-log "Actualizando agentes..."
-cp -r "$TMP_DIR/claude/agents/."   "$LUPIO_DIR/agents/"
-
-log "Actualizando comandos..."
-cp -r "$TMP_DIR/claude/commands/." "$LUPIO_DIR/commands/"
+log "Actualizando plugin lupio-os..."
+if command -v claude >/dev/null 2>&1; then
+  claude plugin marketplace update lupio >/dev/null 2>&1 || true
+  claude plugin update lupio-os@lupio >/dev/null 2>&1 \
+    && success "Plugin actualizado (reinicia Claude Code para aplicarlo)." \
+    || warn "No se pudo actualizar el plugin. En Claude Code: /plugin › lupio-os › Update"
+else
+  warn "Claude Code no encontrado: actualiza el plugin desde /plugin al abrirlo."
+fi
+if [ -d "$LUPIO_DIR/agents" ] || [ -d "$LUPIO_DIR/commands" ]; then
+  warn "Proyecto en v1. Ejecuta el instalador nuevo para migrar:"
+  warn "  bash <(curl -s https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)"
+fi
 
 log "Actualizando workflows..."
 [ -d "$TMP_DIR/claude/workflows" ] && cp -r "$TMP_DIR/claude/workflows/." "$LUPIO_DIR/workflows/"
@@ -84,16 +89,6 @@ if [ -f "wp-config.php" ] || [ -d "wp-content" ]; then
     mkdir -p "$LUPIO_DIR/skills/wordpress"
     cp -r "$TMP_DIR/claude/skills/wordpress/." "$LUPIO_DIR/skills/wordpress/"
   fi
-fi
-
-# Lupio skills (arranque + diseño) — van a .claude/skills/ para que auto-carguen
-if [ -d "$TMP_DIR/.claude/skills" ]; then
-  log "Actualizando Lupio skills (.claude/skills/)..."
-  mkdir -p ".claude/skills"
-  for skill_dir in "$TMP_DIR/.claude/skills/"*/; do
-    [ -d "$skill_dir" ] && cp -r "${skill_dir%/}" ".claude/skills/"
-  done
-  [ -f "$TMP_DIR/.claude/skills/ATTRIBUTION.md" ] && cp "$TMP_DIR/.claude/skills/ATTRIBUTION.md" ".claude/skills/"
 fi
 
 log "Actualizando templates..."
@@ -150,7 +145,7 @@ EOF
 echo ""
 success "¡Lupio OS actualizado a la versión $LATEST_SHA!"
 echo ""
-echo "  Agentes, comandos, skills y templates actualizados."
+echo "  Plugin (agentes, comandos, skills) + workflows, templates y core actualizados."
 echo "  Tu memoria, contexto y CLAUDE.md NO fueron modificados."
 echo "  Backup reversible: $BACKUP_DIR"
 echo "  Para traer el CLAUDE.md nuevo a este proyecto: apply-update.sh --refresh-claude-md"

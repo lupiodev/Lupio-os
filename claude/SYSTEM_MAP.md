@@ -1,5 +1,7 @@
 # Lupio OS — System Map
 
+> v2: agentes (`agents/`), comandos (`claude/commands/`) y skills (`.claude/skills/`) se editan en el repo `lupiodev/Lupio-os` y se publican subiendo `version` en `.claude-plugin/plugin.json`.
+
 Read this file first. Use it to navigate directly to the section you need — no full-file scanning.
 
 > **IDE tip:** Select the target section in the editor before asking for a change — Claude receives it as context and skips the file read entirely.
@@ -18,9 +20,9 @@ Read this file first. Use it to navigate directly to the section you need — no
 | What files an agent is allowed to load | `agents/<name>.md` | `## Token Rules` |
 | Agent output format / memory file written | `agents/<name>.md` | `## Output` |
 | Agent safety boundaries (what it must NOT do) | `agents/<name>.md` | `## Boundaries` |
-| Command input questions (what Claude asks) | `commands/<name>.md` | `## Ask` |
-| Command execution steps | `commands/<name>.md` | `## Steps` or `## Action` |
-| Command output files | `commands/<name>.md` | `## Outputs` |
+| Command input questions (what Claude asks) | `claude/commands/<name>.md` | `## Ask` |
+| Command execution steps | `claude/commands/<name>.md` | `## Steps` or `## Action` |
+| Command output files | `claude/commands/<name>.md` | `## Outputs` |
 | Workflow step sequence | `workflows/<name>.md` | `## Steps` |
 | Workflow checkpoint / approval gate | `workflows/<name>.md` | `## Steps` (last step) |
 | Code review severity definitions (BLOCKER/MAJOR/MINOR) | `workflows/code-review.md` | `## Steps` → step 3 |

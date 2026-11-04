@@ -1,3 +1,7 @@
+---
+description: "Design system architecture from scope and constraints."
+---
+
 # /generate-architecture
 
 Design system architecture from scope and constraints.

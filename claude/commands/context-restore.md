@@ -1,3 +1,7 @@
+---
+description: "Restaura un checkpoint guardado por `/context-save` para retomar trabajo en nueva ventana sin reescanear el proyecto."
+---
+
 # Command: /context-restore
 
 Restaura un checkpoint guardado por `/context-save` para retomar trabajo en nueva ventana sin reescanear el proyecto.

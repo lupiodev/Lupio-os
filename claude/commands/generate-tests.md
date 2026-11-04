@@ -1,3 +1,7 @@
+---
+description: "Generate test suite for a module or feature."
+---
+
 # /generate-tests <module>
 
 Generate test suite for a module or feature.

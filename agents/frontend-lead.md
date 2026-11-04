@@ -1,3 +1,8 @@
+---
+name: frontend-lead
+description: "Generates and reviews frontend code: components, pages, state, API integration."
+---
+
 # Agent: Frontend Lead
 
 Generates and reviews frontend code: components, pages, state, API integration.

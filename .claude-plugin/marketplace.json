@@ -1,0 +1,11 @@
+{
+  "name": "lupio",
+  "owner": { "name": "Lupio Development" },
+  "plugins": [
+    {
+      "name": "lupio-os",
+      "source": "./",
+      "description": "AI Development Operating System de Lupio Development"
+    }
+  ]
+}

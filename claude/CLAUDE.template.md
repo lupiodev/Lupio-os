@@ -5,7 +5,8 @@ All system files live in `.lupio/`. Read `.lupio/context/project.md` before any 
 ## Estándar de arranque — Lupio skills (OBLIGATORIO, ANTES de escribir código)
 
 Al iniciar cualquier proyecto o feature, consulta estas skills (auto-cargan por
-sus disparadores; también `/nombre` para forzarlas). Viven en `.claude/skills/`.
+sus disparadores; también `/nombre` para forzarlas). Vienen del plugin `lupio-os`
+(si `/nombre` choca con otra skill, usa `/lupio-os:nombre`).
 
 1. `lupio-arranque` — al arrancar un proyecto/MVP/repo nuevo: problema, usuario,
    primera cosa visible, stack mínimo, Día 1.
@@ -331,8 +332,10 @@ it as context and skips the file read.
 ## Locations
 
 - System map: `.lupio/SYSTEM_MAP.md` ← start here when editing system files
-- Agents: `.lupio/agents/<name>.md`
-- Commands: `.lupio/commands/<name>.md`
+- Agents: plugin `lupio-os` → subagentes `lupio-os:<name>` (ver con `/agents`)
+- Commands: plugin `lupio-os` → `/lupio-os:<name>` o `/<name>` (ver con `/skills`)
+- Los agentes/comandos/skills NO se editan en el proyecto: se editan en el repo `lupiodev/Lupio-os`
+  y llegan a todos los proyectos al actualizar el plugin.
 - Workflows: `.lupio/workflows/<name>.md`
 - Prompts: `.lupio/prompts/context-template.md` ← template manual (fallback)
 - Checkpoints: `.lupio/checkpoints/` ← snapshots automáticos vía `/context-save`

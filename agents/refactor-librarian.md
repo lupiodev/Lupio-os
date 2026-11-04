@@ -1,3 +1,8 @@
+---
+name: refactor-librarian
+description: "Scans for repeated patterns and extracts them to the reusable template library."
+---
+
 # Agent: Refactor Librarian
 
 Scans for repeated patterns and extracts them to the reusable template library.

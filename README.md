@@ -17,54 +17,25 @@ Lupio OS gives AI assistants a structured operating environment with:
 
 ---
 
-## Installation
+## Installation (v2 — plugin de Claude Code)
 
-From any project folder:
+**Proyecto nuevo o existente** (desde la carpeta del proyecto):
 
 ```bash
 bash <(curl -s https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)
 ```
 
-### The installation is interactive
-
-The installer will:
-
-1. **Detect your project directory** and show you exactly where files will be created
-2. **Detect your editor** (Cursor or VS Code) and configure it automatically
-3. **Show you what will be installed** before touching anything
-4. **Ask for your confirmation** before creating any files
-5. **Check for Claude Code CLI** and offer to install it if missing
-
-Example output:
+**Solo el plugin** (sin `.lupio/`), dentro de Claude Code:
 
 ```
-  Lupio OS — AI Development Operating System — v1.1.0
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  Detected project directory:
-  /Users/you/my-project
-
-  Detected editors:
-  ✔  Cursor
-  ✔  VS Code
-
-  The following folders will be installed:
-
-  .lupio/
-  .lupio/agents/          13 AI agent definitions
-  .lupio/commands/         13 executable commands
-  .lupio/workflows/        9 development workflows
-  .lupio/context/          project context (preserved if exists)
-  .lupio/memory/           agent memory (preserved if exists)
-  .cursor/               Cursor AI operating rules
-  .vscode/               VS Code settings (merged, not overwritten)
-
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  Continue installation? (y/n):
+/plugin install lupio-os --marketplace lupiodev/Lupio-os
 ```
 
-If you answer **n**, the installer stops without modifying anything.
+- Agentes, comandos y skills llegan por el plugin `lupio-os` y se actualizan solos.
+- El instalador solo prepara el proyecto: `.lupio/`, `CLAUDE.md` y `.claude/settings.json`.
+- Proyectos v1: el mismo comando los migra (respaldo en `.lupio/checkpoints/legacy-v1-*`).
+
+Guía completa: [`docs/GUIA-INSTALACION-v2.md`](docs/GUIA-INSTALACION-v2.md)
 
 ---
 

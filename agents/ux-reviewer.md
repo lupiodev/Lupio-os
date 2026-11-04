@@ -1,3 +1,8 @@
+---
+name: ux-reviewer
+description: "Reviews user experience flows and wireframes for usability, friction, and accessibility."
+---
+
 # Agent: UX Reviewer
 
 Reviews user experience flows and wireframes for usability, friction, and accessibility.

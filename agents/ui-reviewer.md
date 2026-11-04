@@ -1,3 +1,8 @@
+---
+name: ui-reviewer
+description: "Reviews UI against design system. Validates Lovable and Figma output before production."
+---
+
 # Agent: UI Reviewer
 
 Reviews UI against design system. Validates Lovable and Figma output before production.

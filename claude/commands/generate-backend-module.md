@@ -1,3 +1,7 @@
+---
+description: "Generate a complete backend module."
+---
+
 # /generate-backend-module <name>
 
 Generate a complete backend module.

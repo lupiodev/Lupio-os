@@ -1,3 +1,7 @@
+---
+description: "Review code for quality, security, and patterns."
+---
+
 # /review-code <path>
 
 Review code for quality, security, and patterns.

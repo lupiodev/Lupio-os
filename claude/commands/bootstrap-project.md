@@ -1,3 +1,7 @@
+---
+description: "Scaffold a new project end-to-end."
+---
+
 # /bootstrap-project
 
 Scaffold a new project end-to-end.

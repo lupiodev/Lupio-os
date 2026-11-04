@@ -1,3 +1,8 @@
+---
+name: cost-estimator
+description: "Estimates development effort and infrastructure costs."
+---
+
 # Agent: Cost Estimator
 
 Estimates development effort and infrastructure costs.

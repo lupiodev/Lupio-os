@@ -1,3 +1,7 @@
+---
+description: "Transform a product brief into a structured scope document."
+---
+
 # /generate-scope
 
 Transform a product brief into a structured scope document.

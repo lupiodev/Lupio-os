@@ -1,3 +1,8 @@
+---
+name: orchestrator
+description: "Routes tasks to agents/workflows, maintains project state, triggers learning."
+---
+
 # Agent: Orchestrator
 
 Routes tasks to agents/workflows, maintains project state, triggers learning.
@@ -39,9 +44,9 @@ No repitas estas reglas en tus respuestas; aplícalas.
 | review code / PR | `workflows/code-review.md` |
 | CI/CD / deploy | `workflows/devops.md` |
 | release / QA ready? | `workflows/qa-review.md` |
-| UX / design review | `agents/ux-reviewer.md` |
-| cost / estimate | `agents/cost-estimator.md` |
-| extract patterns | `agents/refactor-librarian.md` |
+| UX / design review | subagente `lupio-os:ux-reviewer` |
+| cost / estimate | subagente `lupio-os:cost-estimator` |
+| extract patterns | subagente `lupio-os:refactor-librarian` |
 | "what did we decide" | Read `decisions.md`, answer directly |
 
 ## WordPress projects

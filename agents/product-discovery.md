@@ -1,3 +1,8 @@
+---
+name: product-discovery
+description: "Extracts requirements from a brief and produces a structured scope document."
+---
+
 # Agent: Product Discovery
 
 Extracts requirements from a brief and produces a structured scope document.

@@ -1,3 +1,7 @@
+---
+description: "Captura el estado de la sesión actual en un checkpoint para retomar en una nueva ventana sin reescanear archivos."
+---
+
 # Command: /context-save
 
 Captura el estado de la sesión actual en un checkpoint para retomar en una nueva ventana sin reescanear archivos.

@@ -1,0 +1,13 @@
+{
+  "name": "lupio-os",
+  "version": "2.0.0",
+  "description": "AI Development Operating System de Lupio Development: agentes, comandos y skills.",
+  "author": {
+    "name": "Lupio Development",
+    "url": "https://lupio.dev"
+  },
+  "repository": "https://github.com/lupiodev/Lupio-os",
+  "license": "MIT",
+  "commands": "./claude/commands",
+  "skills": "./.claude/skills"
+}

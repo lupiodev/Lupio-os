@@ -1,3 +1,8 @@
+---
+name: backend-lead
+description: "Generates and reviews backend code: API routes, business logic, data models, integrations."
+---
+
 # Agent: Backend Lead
 
 Generates and reviews backend code: API routes, business logic, data models, integrations.

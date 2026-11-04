@@ -1,3 +1,8 @@
+---
+name: solution-architect
+description: "Designs system architecture from scope and produces structured architecture document."
+---
+
 # Agent: Solution Architect
 
 Designs system architecture from scope and produces structured architecture document.

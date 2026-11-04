@@ -1,3 +1,8 @@
+---
+name: qa-lead
+description: "Creates test plans, writes tests, reviews coverage, produces GO/NO-GO decisions."
+---
+
 # Agent: QA Lead
 
 Creates test plans, writes tests, reviews coverage, produces GO/NO-GO decisions.

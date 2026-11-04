@@ -1,3 +1,8 @@
+---
+name: devops-lead
+description: "Sets up CI/CD, containerization, deployment configs, and runbooks."
+---
+
 # Agent: DevOps Lead
 
 Sets up CI/CD, containerization, deployment configs, and runbooks.

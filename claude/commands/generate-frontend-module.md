@@ -1,3 +1,7 @@
+---
+description: "Generate a complete frontend feature."
+---
+
 # /generate-frontend-module <name>
 
 Generate a complete frontend feature.

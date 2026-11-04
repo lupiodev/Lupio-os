@@ -1,9 +1,15 @@
 # CLAUDE.md — Lupio OS
 
-Este repo **es** el sistema operativo de desarrollo de Lupio: distribuye agents,
-commands, workflows y **skills** a cada proyecto vía `installer/install.sh`
-(fuente en `claude/` y `.claude/skills/`, destino `.lupio/` y `.claude/skills/`
-en cada proyecto).
+Este repo **es** el sistema operativo de desarrollo de Lupio. Desde v2.0 es
+**plugin + marketplace de Claude Code** (`.claude-plugin/`):
+
+- Plugin `lupio-os` → `agents/`, `claude/commands/` y `.claude/skills/` (se
+  actualizan solos en cada proyecto al subir `version` en `plugin.json`).
+- `installer/install.sh` → solo prepara cada proyecto: `.lupio/` (contexto,
+  memoria, workflows, templates, core), `CLAUDE.md` y `.claude/settings.json`.
+
+**Al publicar cambios en agentes/comandos/skills: sube `version` en
+`.claude-plugin/plugin.json` (y en `package.json`). Sin eso no llegan.**
 
 Lupio es una empresa de desarrollo: plataformas digitales, SaaS, ecommerce,
 automatización y soluciones con IA. Stack frecuente: React/Next.js/Tailwind/

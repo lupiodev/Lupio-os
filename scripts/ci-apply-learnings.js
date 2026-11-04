@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 
 const LEARNINGS_DIR = path.join(__dirname, '..', 'learnings');
-const AGENTS_DIR = path.join(__dirname, '..', 'claude', 'agents');
+const AGENTS_DIR = path.join(__dirname, '..', 'agents');
 const CHANGELOG_PATH = path.join(__dirname, '..', 'LEARNING_HISTORY.md');
 
 function readFile(filePath) {

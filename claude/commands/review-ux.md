@@ -1,8 +1,12 @@
+---
+description: "Review UX flows, wireframes, or prototypes."
+---
+
 # /review-ux
 
 Review UX flows, wireframes, or prototypes.
 
-**Agent:** agents/ux-reviewer.md
+**Agent:** subagente `lupio-os:ux-reviewer`
 **Ask:** flow reference (Figma/Lovable/description), user personas
 **Output:** `memory/ux-review.md` with prioritized issues (BLOCKER/MAJOR/MINOR)
 

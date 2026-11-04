@@ -1,3 +1,7 @@
+---
+description: "QA readiness review with GO/NO-GO decision."
+---
+
 # /review-qa
 
 QA readiness review with GO/NO-GO decision.
