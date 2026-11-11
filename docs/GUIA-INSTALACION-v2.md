@@ -44,7 +44,7 @@ Listo. Desde aquí, cada cambio que publiques le llega solo.
 Desde la carpeta del proyecto:
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)
 ```
 
 Después:
@@ -62,7 +62,7 @@ Cuando otro dev clone el repo y abra Claude Code, el plugin se le ofrece solo.
 
 Ejecuta **el mismo comando** del Momento 3. El instalador:
 
-- Mueve `.lupio/agents/`, `.lupio/commands/` y las skills Lupio de `.claude/skills/` a `.lupio/checkpoints/legacy-v1-*` (respaldo).
+- Mueve `.lupio/agents/`, `.lupio/commands/`, las skills Lupio de `.claude/skills/` y los comandos Lupio de `.claude/commands/` a `.lupio/checkpoints/legacy-v1-*` (respaldo).
 - Respeta tus skills propias del proyecto, tu `CLAUDE.md`, contexto y memoria.
 - Fusiona `.claude/settings.json` sin borrar lo que ya tenías.
 
@@ -112,9 +112,10 @@ mi-proyecto/
 | Variable | Efecto |
 |---|---|
 | `LUPIO_YES=true` | Instala sin preguntas (CI) |
+| `LUPIO_MARKETING=true` / `false` | Activa (o no) el plugin opcional `marketing-skills` sin preguntar. Sin la variable, el instalador pregunta; con `LUPIO_YES=true` no se activa |
 | `LUPIO_BYPASS=true` | `bypassPermissions` solo en tu máquina (`settings.local.json`). No se comparte con el equipo |
 
-Ejemplo: `LUPIO_YES=true bash <(curl -s https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)`
+Ejemplo: `LUPIO_YES=true bash <(curl -fsSL https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)`
 
 Por defecto el modo es `acceptEdits`: Claude edita archivos sin preguntar, pero los comandos de terminal piden permiso. Los commits, pushes y deploys siguen bloqueados.
 

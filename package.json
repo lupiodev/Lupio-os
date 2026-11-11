@@ -1,6 +1,6 @@
 {
   "name": "lupio-os",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "AI-powered development operating system for Claude Code",
   "bin": {
     "lupio-os": "./scripts/npx-init.js"

@@ -10,6 +10,11 @@ Este repo **es** el sistema operativo de desarrollo de Lupio. Desde v2.0 es
 
 **Al publicar cambios en agentes/comandos/skills: sube `version` en
 `.claude-plugin/plugin.json` (y en `package.json`). Sin eso no llegan.**
+Esa `version` también es la que compara `scripts/check-updates.sh` para avisar
+de actualización en los proyectos (no el SHA: los commits `learn:` no avisan).
+
+Skills de marketing: plugin compañero opcional `marketing-skills@marketingskills`
+(Corey Haines, MIT) que el instalador activa a pedido; no se copia a este repo.
 
 Lupio es una empresa de desarrollo: plataformas digitales, SaaS, ecommerce,
 automatización y soluciones con IA. Stack frecuente: React/Next.js/Tailwind/
@@ -120,5 +125,7 @@ No se entrega nada que no haya pasado sus propias pruebas. Ciclo:
   - `shellcheck` si está disponible.
   - Skills: comprobar que cada `SKILL.md` tiene frontmatter `name` = carpeta y
     `description` con disparadores, y que aparecen al listar skills.
+- **No borres `claude/agents`** (symlink a `../agents`): los `apply-update.sh` de proyectos
+  v1 copian desde esa ruta y sin él fallan a medias y vuelven a pedir actualizar.
 - **Al cambiar el sistema, mantén sincronizados:** `installer/install.sh`,
   `scripts/apply-update.sh` y este `CLAUDE.md`.

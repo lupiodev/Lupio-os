@@ -120,7 +120,7 @@ que componentes; evita los defaults de IA; QA con Playwright en 375/768/1280.
 
 Run once, silently: `bash .lupio/scripts/check-updates.sh 2>/dev/null`
 
-If output = `UPDATE_AVAILABLE`, ask:
+If output starts with `UPDATE_AVAILABLE`, ask **once** (the script won't report it again for 24 h):
 > 🔄 **Nueva versión de Lupio OS disponible.** ¿Actualizar ahora? (sí/no)
 - sí → `bash .lupio/scripts/apply-update.sh`
 - no → continue
