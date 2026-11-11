@@ -2,24 +2,29 @@
 set -euo pipefail
 
 # ============================================================
-# Lupio OS Installer v2.0.0
+# Lupio OS Installer v2.1.0
 # Prepara UN proyecto. Agentes, comandos y skills llegan por el
 # plugin `lupio-os` (se actualiza solo). Este script solo deja:
 #   .lupio/  ·  CLAUDE.md  ·  .claude/settings.json  ·  editores
 #
 # Uso:
-#   bash <(curl -s https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)
+#   bash <(curl -fsSL https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)
 # Opciones (variables de entorno):
 #   LUPIO_YES=true      sin preguntas (CI)
+#   LUPIO_MARKETING=true|false   activa (o no) el plugin de marketing sin preguntar
 #   LUPIO_BYPASS=true   activa bypassPermissions SOLO en tu máquina (settings.local.json)
 # ============================================================
 
-LUPIO_REPO="https://github.com/lupiodev/Lupio-os"
+LUPIO_REPO="${LUPIO_REPO_URL:-https://github.com/lupiodev/Lupio-os}"
 LUPIO_GH="lupiodev/Lupio-os"
 LUPIO_BRANCH="main"
 LUPIO_DIR=".lupio"
-LUPIO_VERSION="2.0.0"
+LUPIO_VERSION="2.1.0"   # se reemplaza por la `version` de plugin.json tras descargar
 PLUGIN_ID="lupio-os@lupio"
+# Plugin compañero opcional (MIT, Corey Haines) — ver .claude/skills/ATTRIBUTION.md
+MARKETING_GH="coreyhaines31/marketingskills"
+MARKETING_MARKETPLACE="marketingskills"
+MARKETING_PLUGIN_ID="marketing-skills@marketingskills"
 
 GREEN='\033[0;32m'; BLUE='\033[0;34m'; YELLOW='\033[1;33m'; RED='\033[0;31m'
 CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
@@ -36,6 +41,8 @@ EDITOR_CURSOR=false
 EDITOR_VSCODE=false
 HAS_CLAUDE_CODE=false
 PLUGIN_OK=false
+WANT_MARKETING=false
+STALE_CLAUDE_MD=false
 
 print_banner() {
   echo ""
@@ -64,6 +71,7 @@ confirm_installation() {
   echo -e "  ${CYAN}.claude/settings.json${NC}    activa el plugin + permisos seguros (se fusiona)"
   [ "$EDITOR_CURSOR" = true ] && echo -e "  ${CYAN}.cursor/rules.md${NC}         reglas para Cursor"
   [ "$EDITOR_VSCODE" = true ] && echo -e "  ${CYAN}.vscode/settings.json${NC}    exclusiones de búsqueda (se fusiona)"
+  [ "${LUPIO_MARKETING:-}" = "true" ] && echo -e "  ${CYAN}plugin marketing-skills${NC}  skills de marketing (opcional, de terceros)"
   echo ""
   [ -d "$LUPIO_DIR/agents" ] && warn "Instalación v1 detectada: se migrará (respaldo en .lupio/checkpoints/)."
   hr; echo ""
@@ -74,6 +82,23 @@ confirm_installation() {
   read -r answer < /dev/tty 2>/dev/null || { echo ""; warn "Sin terminal. Usa: LUPIO_YES=true bash install.sh"; exit 1; }
   [[ "$answer" =~ ^[YySs]$ ]] || { echo ""; info "Cancelado. No se modificó nada."; exit 0; }
   echo ""
+}
+
+# ── Opcional: skills de marketing (plugin de terceros, se actualiza solo) ──
+ask_marketing() {
+  case "${LUPIO_MARKETING:-}" in
+    true)  WANT_MARKETING=true;  return ;;
+    false) WANT_MARKETING=false; return ;;
+  esac
+  [ "${LUPIO_YES:-}" = "true" ] && return
+  echo -e "  ${BOLD}Opcional:${NC} skills de marketing (CRO, copy, SEO, ads, emails, pricing…)."
+  echo -e "  Plugin ${CYAN}marketing-skills${NC} de Corey Haines (MIT). Suma ~50 skills al contexto."
+  printf "  ¿Activarlo en este proyecto? (y/N): "
+  local answer=""
+  read -r answer < /dev/tty 2>/dev/null || answer=""
+  [[ "$answer" =~ ^[YySs]$ ]] && WANT_MARKETING=true
+  echo ""
+  return 0
 }
 
 check_claude_code() {
@@ -94,27 +119,53 @@ download_lupio() {
   git clone --depth=1 --branch "$LUPIO_BRANCH" "$LUPIO_REPO" "$tmp/lupio-os" >/dev/null 2>&1 \
     || error "No se pudo descargar $LUPIO_REPO"
   LUPIO_SRC="$tmp/lupio-os"
-  success "Descargado."
+  local v
+  v=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['version'])" "$LUPIO_SRC/.claude-plugin/plugin.json" 2>/dev/null || true)
+  [ -n "$v" ] && LUPIO_VERSION="$v"
+  success "Descargado (v$LUPIO_VERSION)."
 }
 
 # ── Migración desde v1 (copias locales de agentes/comandos/skills) ──
 migrate_v1() {
-  local stamp backup moved=0
+  local stamp backup moved=0 d s name f base
   stamp=$(date -u +"%Y%m%d-%H%M%S")
   backup="$LUPIO_DIR/checkpoints/legacy-v1-$stamp"
   for d in agents commands; do
     if [ -d "$LUPIO_DIR/$d" ]; then mkdir -p "$backup"; mv "$LUPIO_DIR/$d" "$backup/"; moved=1; fi
   done
+
+  # Skills copiadas por v1: carpetas con el mismo nombre que las del plugin…
   if [ -d ".claude/skills" ] && [ -d "$LUPIO_SRC/.claude/skills" ]; then
     for s in "$LUPIO_SRC/.claude/skills/"*/; do
-      local name; name=$(basename "$s")
+      name=$(basename "$s")
       if [ -d ".claude/skills/$name" ]; then
         mkdir -p "$backup/claude-skills"; mv ".claude/skills/$name" "$backup/claude-skills/"; moved=1
       fi
     done
-    [ -f ".claude/skills/ATTRIBUTION.md" ] && mv ".claude/skills/ATTRIBUTION.md" "$backup/claude-skills/" 2>/dev/null || true
+    # …y archivos sueltos que un instalador viejo aplanó en la raíz
+    # (SKILL.md, LICENSE, AUDIT.md…). Solo los que existen dentro de una skill de Lupio.
+    for f in ".claude/skills/"*; do
+      [ -f "$f" ] || continue
+      base=$(basename "$f")
+      if [ "$base" = "ATTRIBUTION.md" ] || compgen -G "$LUPIO_SRC/.claude/skills/*/$base" >/dev/null; then
+        mkdir -p "$backup/claude-skills"; mv "$f" "$backup/claude-skills/"; moved=1
+      fi
+    done
     rmdir ".claude/skills" 2>/dev/null || true
   fi
+
+  # Comandos copiados por v1 a .claude/commands/: ahora llegan por el plugin
+  # (dejarlos duplica cada /comando). Los comandos propios del proyecto no se tocan.
+  if [ -d ".claude/commands" ] && [ -d "$LUPIO_SRC/claude/commands" ]; then
+    for s in "$LUPIO_SRC/claude/commands/"*.md; do
+      name=$(basename "$s")
+      if [ -f ".claude/commands/$name" ]; then
+        mkdir -p "$backup/claude-commands"; mv ".claude/commands/$name" "$backup/claude-commands/"; moved=1
+      fi
+    done
+    rmdir ".claude/commands" 2>/dev/null || true
+  fi
+
   [ "$moved" = 1 ] && success "Copias v1 retiradas (ahora vienen del plugin). Respaldo: $backup"
   return 0
 }
@@ -146,7 +197,8 @@ install_lupio_dir() {
 configure_project_settings() {
   step "Configurando .claude/settings.json..."
   mkdir -p .claude
-  LUPIO_GH="$LUPIO_GH" python3 - << 'PYEOF'
+  LUPIO_GH="$LUPIO_GH" WANT_MARKETING="$WANT_MARKETING" MARKETING_GH="$MARKETING_GH" \
+  MARKETING_MARKETPLACE="$MARKETING_MARKETPLACE" MARKETING_PLUGIN_ID="$MARKETING_PLUGIN_ID" python3 - << 'PYEOF'
 import json, os, sys
 p = ".claude/settings.json"
 try:
@@ -158,6 +210,11 @@ data.setdefault("extraKnownMarketplaces", {})["lupio"] = {
     "source": {"source": "github", "repo": os.environ["LUPIO_GH"]}
 }
 data.setdefault("enabledPlugins", {})["lupio-os@lupio"] = True
+if os.environ.get("WANT_MARKETING") == "true":
+    data["extraKnownMarketplaces"][os.environ["MARKETING_MARKETPLACE"]] = {
+        "source": {"source": "github", "repo": os.environ["MARKETING_GH"]}
+    }
+    data["enabledPlugins"][os.environ["MARKETING_PLUGIN_ID"]] = True
 
 perm = data.setdefault("permissions", {})
 perm.setdefault("defaultMode", "acceptEdits")
@@ -166,7 +223,8 @@ deny = ["Bash(git commit:*)","Bash(git push:*)","Bash(git tag:*)","Bash(vercel:*
         "Bash(firebase deploy:*)","Bash(gcloud app deploy:*)","Bash(gcloud run deploy:*)",
         "Bash(eb deploy:*)","Bash(pm2 deploy:*)","Bash(serverless deploy:*)","Bash(npm publish:*)",
         "Bash(yarn publish:*)","Bash(gh release create:*)","Bash(gh workflow run:*)",
-        "Bash(kubectl apply:*)","Read(./.env)","Read(./.env.*)"]
+        "Bash(kubectl apply:*)","Read(./.env)","Read(./.env.*)",
+        "mcp__git__git_commit","mcp__git__git_checkout","mcp__git__git_create_branch","mcp__git__git_reset"]
 ask  = ["Bash(rm -rf:*)","Bash(rm -fr:*)","Bash(git reset --hard:*)","Bash(git clean -fd:*)",
         "Bash(git branch -D:*)","Bash(git rebase:*)","Bash(kubectl delete:*)",
         "Bash(docker rm -f:*)","Bash(docker system prune:*)"]
@@ -182,7 +240,10 @@ PYEOF
     python3 - << 'PYEOF'
 import json, os, sys
 p = ".claude/settings.local.json"
-d = json.load(open(p)) if os.path.exists(p) else {}
+try:
+    d = json.load(open(p)) if os.path.exists(p) else {}
+except Exception as e:
+    print(f"  ⚠  settings.local.json inválido, no se tocó: {e}", file=sys.stderr); sys.exit(0)
 d.setdefault("permissions", {})["defaultMode"] = "bypassPermissions"
 json.dump(d, open(p, "w"), indent=2)
 print("  ⚠  bypassPermissions activado SOLO en esta máquina (.claude/settings.local.json)", file=sys.stderr)
@@ -200,6 +261,14 @@ install_plugin() {
   else
     warn "No se pudo instalar automáticamente. Al abrir Claude Code acepta el aviso del plugin, o ejecuta: /plugin install $PLUGIN_ID"
   fi
+  if [ "$WANT_MARKETING" = true ]; then
+    claude plugin marketplace add "$MARKETING_GH" --scope project >/dev/null 2>&1 || true
+    if claude plugin install "$MARKETING_PLUGIN_ID" --scope project >/dev/null 2>&1; then
+      success "Plugin marketing-skills instalado."
+    else
+      warn "marketing-skills quedó declarado en settings.json; acepta el aviso al abrir Claude Code, o: /plugin install $MARKETING_PLUGIN_ID"
+    fi
+  fi
 }
 
 # ── MCP: solo si el proyecto no tiene uno ──
@@ -207,11 +276,19 @@ configure_mcp() {
   [ -f ".mcp.json" ] && { success ".mcp.json existente — no se toca."; return; }
   [ -f "$LUPIO_SRC/mcp/config.json" ] || return
   python3 - "$LUPIO_SRC/mcp/config.json" << 'PYEOF'
-import json, sys
+import json, shutil, sys
 src = json.load(open(sys.argv[1]))
-servers = {k: {kk: vv for kk, vv in v.items() if kk != "description"} for k, v in src.get("mcpServers", {}).items()}
+servers, skipped = {}, []
+for name, cfg in src.get("mcpServers", {}).items():
+    # Un servidor cuyo ejecutable no existe falla en cada arranque de Claude Code: se omite.
+    if not shutil.which(cfg.get("command", "")):
+        skipped.append(f"{name} (falta `{cfg.get('command')}`)")
+        continue
+    servers[name] = {k: v for k, v in cfg.items() if k != "description"}
 json.dump({"mcpServers": servers}, open(".mcp.json", "w"), indent=2)
-print("  ✔  .mcp.json creado", file=sys.stderr)
+print("  ✔  .mcp.json creado: " + ", ".join(servers), file=sys.stderr)
+if skipped:
+    print("  ⚠  MCP omitidos: " + ", ".join(skipped) + ". Para git/fetch/time instala uv (https://docs.astral.sh/uv/) y reinstala.", file=sys.stderr)
 PYEOF
 }
 
@@ -253,11 +330,35 @@ generate_claude_md() {
   [ -f "$LUPIO_SRC/claude/CLAUDE.template.md" ] || return
   if [ -f "CLAUDE.md" ]; then
     cp "$LUPIO_SRC/claude/CLAUDE.template.md" "$LUPIO_DIR/CLAUDE.lupio.md"
-    warn "CLAUDE.md ya existe — la versión Lupio quedó en .lupio/CLAUDE.lupio.md (fusiónala a mano)."
+    if grep -qE '\.lupio/(agents|commands)/' CLAUDE.md 2>/dev/null; then
+      STALE_CLAUDE_MD=true
+      warn "Tu CLAUDE.md es de v1 y apunta a .lupio/agents|commands, que ya no existen."
+      warn "Refréscalo (muestra el diff y pide confirmación):  bash .lupio/scripts/apply-update.sh --refresh-claude-md"
+    else
+      warn "CLAUDE.md ya existe — la versión Lupio quedó en .lupio/CLAUDE.lupio.md (fusiónala a mano)."
+    fi
   else
     cp "$LUPIO_SRC/claude/CLAUDE.template.md" "CLAUDE.md"
     success "Creado CLAUDE.md"
   fi
+}
+
+# Sin esto check-updates.sh no sabe qué versión hay y pide actualizar en la primera sesión.
+write_version_file() {
+  local sha; sha=$(git -C "$LUPIO_SRC" rev-parse --short HEAD 2>/dev/null || true)
+  VERSION_FILE="$LUPIO_DIR/context/version.json" V="$LUPIO_VERSION" SHA="$sha" python3 - << 'PYEOF'
+import json, os, time
+path = os.environ["VERSION_FILE"]
+try:
+    data = json.load(open(path))
+except Exception:
+    data = {}
+data.pop("latest_sha", None)
+data.update({"version": os.environ["V"], "latest_version": os.environ["V"], "sha": os.environ["SHA"],
+             "last_updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+             "last_checked": int(time.time())})
+json.dump(data, open(path, "w"), indent=2)
+PYEOF
 }
 
 init_project_context() {
@@ -285,6 +386,7 @@ EOF
   if [ ! -f "$LUPIO_DIR/context/servers.md" ] && [ -f "$LUPIO_SRC/claude/prompts/servers-template.md" ]; then
     sed "s/\[Project Name\]/$name/" "$LUPIO_SRC/claude/prompts/servers-template.md" > "$LUPIO_DIR/context/servers.md"
   fi
+  write_version_file
   success "Contexto del proyecto listo."
 }
 
@@ -298,6 +400,7 @@ print_summary() {
   else
     echo "    2. Acepta el aviso para instalar 'lupio-os' (o: /plugin install $PLUGIN_ID)"
   fi
+  [ "$STALE_CLAUDE_MD" = true ] && echo "    !  Refresca tu CLAUDE.md v1:  bash .lupio/scripts/apply-update.sh --refresh-claude-md"
   echo "    3. Haz commit de: CLAUDE.md, .claude/settings.json, .lupio/ (lo que no esté en .gitignore)"
   echo ""
   echo -e "  ${CYAN}Actualizar framework:${NC} automático (activa auto-update una vez en /plugin › Marketplaces)"
@@ -310,6 +413,7 @@ main() {
   check_requirements
   detect_editors
   confirm_installation
+  ask_marketing
   check_claude_code
   download_lupio
   mkdir -p "$LUPIO_DIR/checkpoints"

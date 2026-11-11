@@ -22,7 +22,7 @@ Lupio OS gives AI assistants a structured operating environment with:
 **Proyecto nuevo o existente** (desde la carpeta del proyecto):
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)
 ```
 
 **Solo el plugin** (sin `.lupio/`), dentro de Claude Code:
@@ -33,6 +33,8 @@ bash <(curl -s https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installe
 
 - Agentes, comandos y skills llegan por el plugin `lupio-os` y se actualizan solos.
 - El instalador solo prepara el proyecto: `.lupio/`, `CLAUDE.md` y `.claude/settings.json`.
+- Opcional: skills de marketing (plugin `marketing-skills` de Corey Haines, MIT). El instalador pregunta; o usa `LUPIO_MARKETING=true`.
+- MCP `git`/`fetch`/`time` usan `uvx` (requieren [uv](https://docs.astral.sh/uv/)); si falta, se omiten en vez de fallar.
 - Proyectos v1: el mismo comando los migra (respaldo en `.lupio/checkpoints/legacy-v1-*`).
 
 Guía completa: [`docs/GUIA-INSTALACION-v2.md`](docs/GUIA-INSTALACION-v2.md)
@@ -76,7 +78,7 @@ CLAUDE.md            Claude Code operating instructions (project root)
 
 ## Updating Lupio OS
 
-When a new version of Lupio OS is available, Claude will detect it automatically at the start of your session and ask:
+The check compares the installed `version` (`.lupio/context/version.json`) against `version` in `.claude-plugin/plugin.json` on `main`, at most once every 24 h. Commits that don't bump the version (e.g. `learn:`) never trigger it. When a new version is published, Claude asks at the start of your session:
 
 ```
 🔄 Hay una nueva versión de Lupio OS disponible.
