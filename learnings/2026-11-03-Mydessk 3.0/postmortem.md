@@ -3,7 +3,7 @@
 **Fecha:** 2026-09-14
 **Repo:** seshub-backend
 **Síntoma reportado:** un usuario no podía iniciar sesión ("error de servidor"), mientras que
-desde otras computadoras sí funcionaba. Se sospechó bloqueo por IP (157.100.126.35).
+desde otras computadoras sí funcionaba. Se sospechó bloqueo por IP ([IP de un usuario]).
 
 ## Diagnóstico
 
@@ -63,6 +63,6 @@ tocar la lógica del deploy en sí. Reversible con solo quitar esas dos líneas.
 
 ## Nota aparte (no relacionada, mismo hallazgo)
 
-El usuario de la IP 157.100.126.35 específicamente parece tener un bloqueo de red de su lado
+El usuario de la IP [IP de un usuario] específicamente parece tener un bloqueo de red de su lado
 (firewall corporativo/ISP) — no hay nada que arreglar en nuestra infraestructura para ese caso
 puntual. Pedir que pruebe desde otra red (datos móviles) para confirmar.
