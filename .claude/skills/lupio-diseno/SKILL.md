@@ -71,7 +71,8 @@ Prueba con **Playwright** en 375/768/1280 (Self-QA del CLAUDE.md). Light y dark.
   componente; sale del sistema de la etapa 3.
 - **Evita los defaults de IA** (cream+serif+terracota / negro+acid-green /
   broadsheet). Ver `frontend-design`.
-- **Planea con `lupio-plan`** el corte de implementación y espera OK antes de codear.
+- **Planea con `lupio-plan`** el corte de implementación y ejecútalo sin esperar OK
+  (solo preguntas de negocio, UNA vez y con tu default).
 - **Cero sobre-ingeniería:** no design system de 200 tokens para una landing.
   Escala el sistema al tamaño del producto.
 

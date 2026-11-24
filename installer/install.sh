@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ============================================================
-# Lupio OS Installer v2.1.0
+# Lupio OS Installer v2.2.0
 # Prepara UN proyecto. Agentes, comandos y skills llegan por el
 # plugin `lupio-os` (se actualiza solo). Este script solo deja:
 #   .lupio/  ·  CLAUDE.md  ·  .claude/settings.json  ·  editores
@@ -19,7 +19,7 @@ LUPIO_REPO="${LUPIO_REPO_URL:-https://github.com/lupiodev/Lupio-os}"
 LUPIO_GH="lupiodev/Lupio-os"
 LUPIO_BRANCH="main"
 LUPIO_DIR=".lupio"
-LUPIO_VERSION="2.1.0"   # se reemplaza por la `version` de plugin.json tras descargar
+LUPIO_VERSION="2.2.0"   # se reemplaza por la `version` de plugin.json tras descargar
 PLUGIN_ID="lupio-os@lupio"
 # Plugin compañero opcional (MIT, Corey Haines) — ver .claude/skills/ATTRIBUTION.md
 MARKETING_GH="coreyhaines31/marketingskills"
@@ -198,7 +198,8 @@ configure_project_settings() {
   step "Configurando .claude/settings.json..."
   mkdir -p .claude
   LUPIO_GH="$LUPIO_GH" WANT_MARKETING="$WANT_MARKETING" MARKETING_GH="$MARKETING_GH" \
-  MARKETING_MARKETPLACE="$MARKETING_MARKETPLACE" MARKETING_PLUGIN_ID="$MARKETING_PLUGIN_ID" python3 - << 'PYEOF'
+  MARKETING_MARKETPLACE="$MARKETING_MARKETPLACE" MARKETING_PLUGIN_ID="$MARKETING_PLUGIN_ID" \
+  PERMISSIONS_JSON="$LUPIO_SRC/installer/permissions.json" python3 - << 'PYEOF'
 import json, os, sys
 p = ".claude/settings.json"
 try:
@@ -218,19 +219,14 @@ if os.environ.get("WANT_MARKETING") == "true":
 
 perm = data.setdefault("permissions", {})
 perm.setdefault("defaultMode", "acceptEdits")
-deny = ["Bash(git commit:*)","Bash(git push:*)","Bash(git tag:*)","Bash(vercel:*)",
-        "Bash(netlify deploy:*)","Bash(fly deploy:*)","Bash(flyctl deploy:*)","Bash(railway up:*)",
-        "Bash(firebase deploy:*)","Bash(gcloud app deploy:*)","Bash(gcloud run deploy:*)",
-        "Bash(eb deploy:*)","Bash(pm2 deploy:*)","Bash(serverless deploy:*)","Bash(npm publish:*)",
-        "Bash(yarn publish:*)","Bash(gh release create:*)","Bash(gh workflow run:*)",
-        "Bash(kubectl apply:*)","Read(./.env)","Read(./.env.*)",
-        "mcp__git__git_commit","mcp__git__git_checkout","mcp__git__git_create_branch","mcp__git__git_reset"]
-ask  = ["Bash(rm -rf:*)","Bash(rm -fr:*)","Bash(git reset --hard:*)","Bash(git clean -fd:*)",
-        "Bash(git branch -D:*)","Bash(git rebase:*)","Bash(kubectl delete:*)",
-        "Bash(docker rm -f:*)","Bash(docker system prune:*)"]
-for key, rules in (("deny", deny), ("ask", ask)):
+# Fuente única: installer/permissions.json (allow = dev sin interrupciones · ask = destructivo · deny = commit/deploy).
+# Se fusiona sin quitar nada de lo que el proyecto ya tenía.
+rules = json.load(open(os.environ["PERMISSIONS_JSON"]))
+for key in ("allow", "ask", "deny"):
     cur = perm.setdefault(key, [])
-    cur.extend(r for r in rules if r not in cur)
+    cur.extend(r for r in rules.get(key, []) if r not in cur)
+mcp = data.setdefault("enabledMcpjsonServers", [])
+mcp.extend(m for m in rules.get("enabledMcpjsonServers", []) if m not in mcp)
 
 json.dump(data, open(p, "w"), indent=2)
 print("  ✔  .claude/settings.json: plugin activado + permisos seguros", file=sys.stderr)

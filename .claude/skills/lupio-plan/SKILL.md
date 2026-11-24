@@ -6,7 +6,8 @@ description: >-
   "cómo lo hago", "qué approach", estimar, romper una tarea en pasos.
   Disparadores: "cómo implemento", "plan", "vamos a hacer X", "necesito una
   feature", "refactor", "antes de empezar", "propón un enfoque". Produce un plan
-  en pasos pequeños y reversibles; espera OK antes de tocar código.
+  en pasos pequeños y reversibles y lo ejecuta sin esperar OK; solo se detiene
+  por decisiones de negocio o acciones irreversibles.
 ---
 
 # lupio-plan
@@ -47,13 +48,19 @@ Ata cada paso a un comando concreto de ESTE proyecto:
   Playwright → preview MCP → Chrome MCP (último recurso).
 
 ## 4. Formato del plan
-Entrega el plan así y **espera OK antes de tocar código**:
+Entrega el plan así y **continúa con el paso 1 sin esperar OK** (es una brújula, no una
+compuerta). Solo te detienes si el plan contiene una decisión de **negocio**, algo
+**irreversible/en producción**, o una ambigüedad real que cambia el resultado
+(ver *Autonomía y Preguntas* del CLAUDE.md). En ese caso pregunta UNA vez, todo junto,
+con tu recomendación como default:
 
 ```
 ## Plan: [tarea]
 Problema real: [una frase]
 Enfoque mínimo: [una frase]
 Qué NO haré: [lista corta + por qué]
+Decisiones técnicas que tomo: [lista corta — la mejor opción y por qué]
+Pregunto solo si aplica (negocio / irreversible): [pregunta + mi default]
 
 Pasos (cada uno reversible + su verificación):
 1. [cambio pequeño] → verifico con `[comando]`

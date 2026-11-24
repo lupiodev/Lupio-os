@@ -35,10 +35,10 @@ Archivos clave:
 - path/to/file.ext
 ```
 
-6. Esperar al usuario para confirmar dirección o pedir ajuste
+6. Continuar con el primer próximo paso del checkpoint, sin esperar (solo te detienes si ese paso implica una decisión de negocio pendiente)
 
 ## Reglas
-- **NO leer otros archivos del proyecto** hasta que el usuario confirme qué seguir
+- **No leer otros archivos del proyecto** más allá de los "Archivos clave" del checkpoint hasta que el siguiente paso lo requiera
 - Ordenar por timestamp en el nombre del archivo (estable cross-machine), no por mtime
 - Cap en 20 checkpoints listados (evita inflar contexto)
 - Solo lectura: no modifica código ni git state

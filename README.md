@@ -34,6 +34,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/lupiodev/Lupio-os/main/insta
 - Agentes, comandos y skills llegan por el plugin `lupio-os` y se actualizan solos.
 - El instalador solo prepara el proyecto: `.lupio/`, `CLAUDE.md` y `.claude/settings.json`.
 - Opcional: skills de marketing (plugin `marketing-skills` de Corey Haines, MIT). El instalador pregunta; o usa `LUPIO_MARKETING=true`.
+- Desarrollo sin interrupciones: lista `allow` de comandos seguros (`installer/permissions.json`) y regla de autonomía en el `CLAUDE.md` (decisiones técnicas de Claude; pregunta solo por negocio/irreversible).
 - MCP `git`/`fetch`/`time` usan `uvx` (requieren [uv](https://docs.astral.sh/uv/)); si falta, se omiten en vez de fallar.
 - Proyectos v1: el mismo comando los migra (respaldo en `.lupio/checkpoints/legacy-v1-*`).
 

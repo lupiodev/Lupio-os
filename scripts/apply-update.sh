@@ -68,6 +68,24 @@ if [ -d "$LUPIO_DIR/agents" ] || [ -d "$LUPIO_DIR/commands" ]; then
   warn "  bash <(curl -fsSL https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)"
 fi
 
+# Permisos de desarrollo (installer/permissions.json): se FUSIONAN, nunca se quita nada del proyecto.
+if [ -f "$TMP_DIR/installer/permissions.json" ] && [ -f ".claude/settings.json" ] && command -v python3 >/dev/null 2>&1; then
+  log "Fusionando permisos de desarrollo en .claude/settings.json..."
+  PERMISSIONS_JSON="$TMP_DIR/installer/permissions.json" python3 - << 'PYEOF' || warn "No se pudieron fusionar los permisos (settings.json inválido); revisa .claude/settings.json."
+import json, os
+p = ".claude/settings.json"
+data = json.load(open(p))
+perm = data.setdefault("permissions", {})
+rules = json.load(open(os.environ["PERMISSIONS_JSON"]))
+for key in ("allow", "ask", "deny"):
+    cur = perm.setdefault(key, [])
+    cur.extend(r for r in rules.get(key, []) if r not in cur)
+mcp = data.setdefault("enabledMcpjsonServers", [])
+mcp.extend(m for m in rules.get("enabledMcpjsonServers", []) if m not in mcp)
+json.dump(data, open(p, "w"), indent=2)
+PYEOF
+fi
+
 log "Actualizando workflows..."
 [ -d "$TMP_DIR/claude/workflows" ] && cp -r "$TMP_DIR/claude/workflows/." "$LUPIO_DIR/workflows/"
 

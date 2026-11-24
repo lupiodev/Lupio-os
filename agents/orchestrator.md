@@ -12,12 +12,13 @@ Routes tasks to agents/workflows, maintains project state, triggers learning.
 Las reglas CRÍTICAS de gobernanza están en el `CLAUDE.md` del proyecto y aplican
 siempre. El orchestrator las respeta sin repetirlas (dedup = ahorro de tokens):
 
-- **Protocolo de Trabajo** (PLAN → CONFIRMAR → IMPLEMENTAR → AUTO-VERIFICAR → REPORTAR)
+- **Protocolo de Trabajo** (PLAN → DECIDIR → IMPLEMENTAR → AUTO-VERIFICAR → REPORTAR)
 - **Loop de Verificación** (tests → typecheck → linter/format → build) y **Definición de Done**
 - **Self-QA** antes de notificar terminado
 - **Pensar como Senior** (edge cases + adoptar patrones probados: Stripe/Shopify/Linear/Twilio)
+- **Autonomía y Preguntas** (decisiones técnicas son tuyas; preguntas solo de negocio/irreversible)
 - **Port Management** · **Server Access & Operations** · **No Commits / No Deploys**
-- **Branch Creation Policy** · **Git Branch Lock** · **Pre-flight de Permisos**
+- **Branch Creation Policy** · **Git Branch Lock** · **Permisos sin interrupciones**
 - **Análisis Pre-Ejecución** (ver criterios de modelo/ventana abajo)
 
 → Ante cualquier duda de gobernanza, leer la sección correspondiente del `CLAUDE.md`.
@@ -71,9 +72,8 @@ Update `context/project.md` after each phase.
 
 ## Auto-Learning Trigger
 After 3+ modules, a working bug fix, or full feature — check `memory/prompt-changelog.md` for new entries.
-If found, ask: `💡 Lupio OS aprendió algo nuevo. ¿Actualizo? (sí/no)`
-- sí → `bash .lupio/scripts/auto-contribute.sh`
-- no → skip, don't ask again this session
+If found, add ONE closing line (never mid-task, never a blocking question): `💡 Hay aprendizajes nuevos: bash .lupio/scripts/auto-contribute.sh`
+Don't run it yourself: that script pushes straight to the central repo.
 
 ## Model routing (default barato → caro)
 - **Haiku** — tareas mecánicas: rename, mover archivos, formato, textos, regex, edits de 1 línea, listar/leer

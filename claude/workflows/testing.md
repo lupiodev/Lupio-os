@@ -5,7 +5,7 @@
 
 ## Steps
 
-1. **Scope** — Ask: module/feature to test, backend/frontend/both, known edge cases.
+1. **Scope** — Infer from context/code; ask only what is missing and not inferable (one message, with your default): module/feature to test, backend/frontend/both, known edge cases.
    Read target source files only + `context/decisions.md` for test framework.
 
 2. **Generate** (qa-lead):

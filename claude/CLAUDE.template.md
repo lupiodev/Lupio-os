@@ -10,8 +10,9 @@ sus disparadores; también `/nombre` para forzarlas). Vienen del plugin `lupio-o
 
 1. `lupio-arranque` — al arrancar un proyecto/MVP/repo nuevo: problema, usuario,
    primera cosa visible, stack mínimo, Día 1.
-2. `lupio-plan` — SIEMPRE antes de tocar código en algo no trivial: explorar,
-   preguntas, pasos pequeños y reversibles, esperar OK.
+2. `lupio-plan` — SIEMPRE antes de tocar código en algo no trivial: explorar y
+   definir pasos pequeños y reversibles. Es una brújula, no una compuerta: se
+   ejecuta sin esperar OK (ver Autonomía y Preguntas).
 3. `lupio-seguridad` — antes de prod o al tocar auth/pagos/datos/uploads/endpoints.
 4. `lupio-fixer` — ante cualquier bug: reproducir → causa raíz → fix mínimo →
    probar el caso exacto. Sin evidencia, no está arreglado.
@@ -30,13 +31,49 @@ sigue este ciclo, en orden:
    plan con (a) problema real, (b) enfoque mínimo, (c) **criterios de aceptación
    verificables**, (d) edge cases/errores/validaciones a cubrir, (e) qué NO haré.
    Usa la skill `lupio-plan`. En cambios triviales (typo, 1 línea) basta una frase.
-2. **CONFIRMAR** — Esperar el OK del usuario al plan antes de tocar código
-   (features no triviales).
+   Se muestra y se ejecuta: no se espera OK.
+2. **DECIDIR** — Las decisiones técnicas las tomo yo (la mejor opción, registrada).
+   Solo me detengo por las 3 condiciones de **Autonomía y Preguntas**.
 3. **IMPLEMENTAR** — El corte mínimo que cumple los criterios de aceptación.
    Sin refactors oportunistas.
 4. **AUTO-VERIFICAR** — Correr el Loop de Verificación completo (abajo). Si algo
    falla, arreglar y volver a correr desde el inicio. No avanzo con nada en rojo.
 5. **REPORTAR** — Solo cuando se cumple la Definición de Done, con evidencia real.
+
+## Autonomía y Preguntas (CRÍTICO — prioridad máxima)
+
+El usuario pide, tú terminas. Las decisiones técnicas son tuyas: elige siempre la
+mejor opción (la que recomendaría un senior), aplícala y sigue.
+
+**Decide tú, sin preguntar:** librerías y patrones dentro del stack Lupio, estructura
+de carpetas, nombres, esquema técnico de BD e índices, validaciones, manejo de
+errores, tests, UI dentro del sistema de diseño, refactors dentro del alcance, orden
+de pasos, cómo verificar, instalar dependencias del proyecto, migraciones aditivas
+en dev. Si la decisión pesa, deja UNA línea en `.lupio/context/decisions.md`
+(decisión + razón) y menciónala en el reporte.
+
+**Pregunta SOLO si se cumple una de estas 3:**
+1. **Lógica de negocio:** reglas de precio/cobro/comisiones, permisos y roles de
+   negocio, flujos que cambian lo que ve o paga el cliente, políticas de datos,
+   alcance o prioridad.
+2. **Irreversible o fuera del repo:** producción, pérdida de datos reales
+   (drop/truncate/borrado), commit/push/deploy (ver No Commits), cobros o mensajes
+   a clientes reales, credenciales.
+3. **Ambigüedad real** que no se resuelve leyendo el código y la documentación y
+   que cambiaría el resultado de fondo.
+
+**Cómo preguntar:** UNA sola vez, al inicio, todas juntas y cada una con tu
+recomendación como default. Después trabaja. Si el usuario no responde, procede con
+tu default y señálalo en el reporte para revertirlo fácil. Nunca pidas aprobación de
+planes técnicos ni pasos intermedios, ni preguntes "¿procedo?".
+
+**Tareas largas:** termínalas de principio a fin (implementar → verificar → reportar)
+sin parar a pedir ánimo. Si algo falla, arréglalo y repite el Loop de Verificación.
+Detente a medias solo por una de las 3 condiciones o por un bloqueo real tras
+diagnosticarlo.
+
+**Reporte final:** qué quedó hecho con evidencia, las decisiones técnicas tomadas
+(una línea cada una) y las decisiones de negocio pendientes, si las hay.
 
 ## Loop de Verificación (REGLA NO NEGOCIABLE)
 
@@ -120,10 +157,11 @@ que componentes; evita los defaults de IA; QA con Playwright en 375/768/1280.
 
 Run once, silently: `bash .lupio/scripts/check-updates.sh 2>/dev/null`
 
-If output starts with `UPDATE_AVAILABLE`, ask **once** (the script won't report it again for 24 h):
-> 🔄 **Nueva versión de Lupio OS disponible.** ¿Actualizar ahora? (sí/no)
-- sí → `bash .lupio/scripts/apply-update.sh`
-- no → continue
+If output starts with `UPDATE_AVAILABLE`, add ONE line at the end of your first reply
+(never before the task, never blocking, don't run it yourself, don't ask):
+> 🔄 Hay una versión nueva de Lupio OS: `bash .lupio/scripts/apply-update.sh`
+
+The script won't report it again for 24 h.
 
 ## Port Management (CRÍTICO — sin conflictos entre proyectos)
 
@@ -138,7 +176,8 @@ proyectos activos.
    - Ocupado por MISMO proyecto → conectar al existente, no levantar otro
    - Ocupado por OTRO proyecto → siguiente puerto libre del rango, NUNCA matar el ajeno
    - Libre → levantar y registrar en `context/project.md`
-3. NUNCA `kill -9` / `pkill` sobre puertos ocupados sin confirmación textual del usuario
+3. NUNCA matar procesos de OTROS proyectos o ajenos (`kill -9` / `pkill` sobre su puerto).
+   Los del propio proyecto (dev server colgado, watcher duplicado) los reinicias tú, sin preguntar
 4. Anunciar nueva asignación: `🔌 Asignando puerto X para [servicio] de [proyecto]`
 
 **Rangos por stack:** Vue/Vite 5173-5180 · React/Next 3000-3010 · Laravel 8000-8010 ·
@@ -180,10 +219,16 @@ Si algo falla en QA → arreglar antes de reportar. NUNCA notificar éxito parci
 Al iniciar sesión: leer `.lupio/context/servers.md` (si existe) para conocer accesos
 y método de despliegue del proyecto. Mantener esa info en memoria durante la sesión.
 
-Antes de CUALQUIER operación que toque un servidor remoto (SSH, SCP, rsync, deploys,
-upload a S3/GCS, comandos remotos, restart de servicios, DB remota, CDN, DNS, CI/CD):
+Operaciones sobre un servidor remoto (SSH, SCP, rsync, upload a S3/GCS, comandos
+remotos, restart de servicios, DB remota, CDN, DNS, CI/CD):
 
-→ PREGUNTAR al usuario primero:
+- **Libre, sin preguntar:** lectura y diagnóstico (logs, `ls`, `status`, `SELECT`,
+  health checks) en cualquier entorno, y cambios reversibles en dev/staging propio.
+- **Preguntar, por operación:** todo lo que toque 🔴 PROD y cualquier cosa irreversible
+  o con pérdida de datos (borrar/truncar datos reales, DNS, restart de servicios en
+  prod, secretos).
+
+Para esas, pregunta así:
 ```
 🔐 Operación de servidor detectada
 Acción: [descripción]
@@ -194,7 +239,7 @@ Impacto: [reversible | irreversible | data loss]
 
 - La autorización es por operación, no permanente
 - Producción → advertencia adicional 🔴 PROD
-- Si no hay `servers.md` y se menciona servidor → ofrecer crearlo con plantilla
+- Si no hay `servers.md` y se menciona servidor → crea la plantilla y sigue
 
 ## No Commits / No Deploys (CRÍTICO — prioridad máxima absoluta)
 
@@ -208,9 +253,11 @@ fly, railway, firebase, gcloud, eb, pm2, serverless, npm/yarn publish), `gh rele
 Permitido: `git add`, `git status`, `git diff`, `git log` (staging y consulta sí).
 
 Si el usuario pide explícitamente "haz commit" / "deploy esto":
-1. Confirmar: "Tienes deshabilitados commits/deploys. ¿Confirmas que YO lo ejecute ahora?"
-2. Solo con confirmación textual → proceder con esa única operación
-3. La confirmación NO es permiso permanente para la sesión
+ese pedido ES la confirmación: no la repitas.
+1. Ejecuta solo esa operación.
+2. Si `.claude/settings.json` la bloquea (deny), dilo en una línea y deja el comando
+   listo para que lo corra el usuario (o que quite la regla).
+3. No es permiso permanente para la sesión.
 
 ## Branch Creation Policy (CRÍTICO — complementa Git Branch Lock)
 
@@ -221,14 +268,15 @@ defecto en cada conversación. Regla por defecto: trabajar en la rama actual.
 - SÍ: feature nueva, fix significativo, refactor amplio, WIP de varias sesiones
 - NO: ajuste rápido, typo, una línea, lectura/exploración → rama actual
 
-**Si se justifica, ANUNCIAR primero y esperar confirmación textual:**
+**Si se justifica, SUGIÉRELA en una línea y sigue en la rama actual** (el Git Branch Lock
+impide crearla sin orden explícita; no bloquees la tarea esperando respuesta):
 ```
 🌿 Propuesta de rama nueva
 Tipo: [feature | fix | hotfix | chore | refactor | docs | test]
 Nombre: <tipo>/<descriptor-kebab-case>
 Razón: [por qué amerita rama separada]
 Desde: <rama base actual>
-¿Apruebas? (sí / no / sugerir otro nombre)
+(Dime "crea la rama" si la quieres; mientras tanto sigo en la actual)
 ```
 
 **Naming (Git Flow):**
@@ -253,8 +301,8 @@ nombres de autor, mezclas de idiomas/casing.
 4. NUNCA ejecutar sin pedido explícito del usuario:
    - `git checkout <otra-rama>` / `git switch <rama>` / `git checkout -b` / `git switch -c`
    - `git worktree add` / `git worktree remove`
-5. Si el usuario pide cambiar de rama → confirmar verbalmente:
-   `"Vas a cambiar de [X] a [Y]. Trabajo no commiteado: [N archivos]. ¿Confirmas?"`
+5. Si el usuario pide cambiar de rama, ese pedido es la orden: hazlo y menciónalo. Solo si
+   hay trabajo sin commitear que el cambio pisaría o perdería, avisa y pregunta.
 
 Razón: pérdida de trabajo reportada por cambio inadvertido de rama. Esta regla lo previene.
 
@@ -264,7 +312,7 @@ Razón: pérdida de trabajo reportada por cambio inadvertido de rama. Esta regla
 - **Trivial** (typo, texto, 1 línea, rename, formato, lectura) → SIN bloque de
   análisis. Ejecuta directo (modelo Haiku/Sonnet) y reporta breve.
 - **Medio/Alto** (feature, refactor, multi-archivo, breaking) → responde PRIMERO
-  con este bloque y espera "Adelante":
+  con este bloque informativo (breve) y continúa sin esperar respuesta:
 
 ```
 🔍 ANÁLISIS LUPIO OS — [MÓDULO]
@@ -275,11 +323,10 @@ Razón: pérdida de trabajo reportada por cambio inadvertido de rama. Esta regla
 └─ Modelo ideal: [Haiku | Sonnet | Opus]
 
 ⚠️ ALERTA [🟢 BAJO | 🟡 MEDIO | 🔴 ALTO]
-└─ ¿Continuar aquí o nueva ventana?
+└─ Decisión: [continúo aquí | /context-save en el próximo corte natural]
 
 🎯 RECOMENDACIÓN: [Opción A vs B — voy por X porque...]
 
-Responde "Adelante" o "Nueva ventana".
 ```
 
 - Nueva ventana (🔴): contexto >20K tokens | archivos >15 | 3+ módulos | breaking changes | >5 cambios en sesión
@@ -288,20 +335,23 @@ Responde "Adelante" o "Nueva ventana".
   edits de 1 línea) · `Sonnet` = default (features, ajustes, bugs, UI) ·
   `Opus` = arquitectura/refactor grande/debugging complejo. Nunca Opus para tweaks.
 - Override "Ignora análisis, adelante" → respeta pero loguea riesgo brevemente
-- "Nueva ventana" → ejecutar `/context-save`, abrir nueva ventana, ejecutar `/context-restore`
+- Nueva ventana la decides tú: `/context-save` en un corte natural (nunca a mitad de una
+  tarea larga) y sugiérela en el reporte; en la nueva ventana, `/context-restore`
 
-## Pre-flight de Permisos (CRÍTICO — máxima prioridad)
+## Permisos sin interrupciones (CRÍTICO)
 
-Antes de ejecutar, identificar TODAS las operaciones y solicitarlas en UN SOLO bloque:
+Los permisos de desarrollo ya vienen preconfigurados en `.claude/settings.json`
+(`allow`: tests, build, lint, git de lectura, artisan, composer, docker compose, curl
+local, MCP del proyecto). `deny`: commit/push/deploy. `ask`: borrados masivos y
+operaciones destructivas.
 
-```
-LECTURAS: [rutas]  ESCRITURAS: [rutas]  COMANDOS: [comandos]
-¿Apruebas todo? Procedo sin interrupciones.
-```
-
-- Nunca pedir permisos uno por uno durante la ejecución
-- Si surge operación no prevista, agrupar con pendientes y pedir en bloque
-- Una vez aprobado, ejecutar todo hasta terminar sin volver a interrumpir
+- NO pidas aprobación por adelantado en texto ni listes lecturas/escrituras/comandos:
+  ejecuta.
+- Si el sistema muestra un prompt de permiso, es del sistema: no lo dupliques.
+- Si prevés varias operaciones fuera de la allow-list (instalar global, escribir fuera
+  del repo), agrúpalas y avísalo en UNA línea; no las pidas una por una.
+- Si un comando que usarás seguido sigue pidiendo permiso, sugiere en el reporte
+  la regla `allow` exacta para añadirla.
 
 ## Rules
 
@@ -316,10 +366,11 @@ LECTURAS: [rutas]  ESCRITURAS: [rutas]  COMANDOS: [comandos]
 
 Trigger after: 3+ modules built, bug fixed and working, full feature done, or user says "perfecto/listo/done/works".
 
-Check if `memory/prompt-changelog.md` has new entries. If yes, ask:
-> 💡 **Lupio OS aprendió algo nuevo.** ¿Actualizo automáticamente? (sí/no)
-- sí → `bash .lupio/scripts/auto-contribute.sh`
-- no → skip, don't ask again this session
+Si `memory/prompt-changelog.md` tiene entradas nuevas, añade UNA línea al final del reporte
+(nunca a mitad de la tarea ni como pregunta que bloquee):
+> 💡 Hay aprendizajes nuevos de Lupio OS: `bash .lupio/scripts/auto-contribute.sh`
+
+No lo ejecutes tú: ese script hace push directo al repo central.
 
 ## Before Modifying System Files
 

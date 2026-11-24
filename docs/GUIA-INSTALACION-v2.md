@@ -117,7 +117,13 @@ mi-proyecto/
 
 Ejemplo: `LUPIO_YES=true bash <(curl -fsSL https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)`
 
-Por defecto el modo es `acceptEdits`: Claude edita archivos sin preguntar, pero los comandos de terminal piden permiso. Los commits, pushes y deploys siguen bloqueados.
+Por defecto el modo es `acceptEdits`: Claude edita archivos sin preguntar. Los comandos de desarrollo habituales (tests, build, lint, `artisan`, `composer`, `docker compose`, git de lectura, `curl` local, MCP del proyecto) ya vienen en la lista `allow` y no piden permiso. Siguen pidiendo permiso los borrados masivos y las operaciones destructivas (`rm -rf`, `migrate:fresh`, `docker compose down -v`, instalaciones globales), y siguen bloqueados los commits, pushes y deploys.
+
+La lista vive en `installer/permissions.json` (fuente única) y se **fusiona** en `.claude/settings.json` sin quitar nada tuyo, tanto al instalar como con `apply-update.sh`.
+
+### Autonomía y preguntas
+
+El `CLAUDE.md` que instala Lupio OS le indica a Claude que las decisiones técnicas son suyas y que termine las tareas largas de principio a fin. Solo pregunta por lógica de negocio, acciones irreversibles o de producción, o ambigüedad real, una sola vez y con su recomendación como default. Proyectos con un `CLAUDE.md` anterior: `bash .lupio/scripts/apply-update.sh --refresh-claude-md`.
 
 ---
 

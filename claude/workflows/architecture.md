@@ -6,7 +6,7 @@
 
 ## Steps
 
-1. **Load** `memory/scope.md`. Ask if not in context: backend language, frontend framework, database, deployment target, external integrations.
+1. **Load** `memory/scope.md`. Decide tú (mejor opción del stack Lupio según el scope) lenguaje de backend, framework de frontend, base de datos, despliegue e integraciones; pregunta solo restricciones de negocio (presupuesto, hosting impuesto por el cliente).
 
 2. **Design** (solution-architect) — Write `memory/architecture.md`:
    SUMMARY (max 50 words) · component map · tech stack + rationale · data model overview · API approach · infra · ADRs
