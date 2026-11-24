@@ -22,7 +22,8 @@ AUTH_RULES: <who can do what>
 ```
 
 ## Boundaries
-- Writes backend source only. Does NOT touch frontend or run migrations without confirmation.
+- Writes backend source only. Does NOT touch frontend.
+- Migraciones aditivas en dev: las corre. Destructivas (drop/rename/truncate) o en staging/prod: solo con confirmación.
 - Always validates auth rules before writing any data endpoint.
 
 ## Self-QA antes de reportar terminado (OBLIGATORIO)

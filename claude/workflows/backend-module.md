@@ -7,7 +7,7 @@
 ## Steps
 
 1. **Context** — Read `context/decisions.md` (tech stack). Check `core/<module>/module.md` if exists.
-   Ask if missing: module name, entities, operations (CRUD + special), permissions, events.
+   Infer from context/code; ask only what is missing and not inferable (one message, with your default): module name, entities, operations (CRUD + special), permissions, events.
 
 2. **Generate** (backend-lead) using template `templates/backend-core/express-typescript-module.md`:
    model/schema → service → routes → permissions → migration → events

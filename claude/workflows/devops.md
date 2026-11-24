@@ -6,7 +6,7 @@
 
 ## Steps
 
-1. **Context** — Read `memory/architecture.md` infra section. Ask: deployment target, environments (default: dev/staging/prod), CI provider (default: GitHub Actions), secrets manager.
+1. **Context** — Read `memory/architecture.md` infra section. Decide con defaults: deployment target según el stack, environments dev/staging/prod, CI GitHub Actions, secrets manager de la plataforma; pregunta solo si el cliente impone hosting.
 
 2. **Generate** (devops-lead) based on target:
    - `.github/workflows/ci.yml` — lint + test + build on PR

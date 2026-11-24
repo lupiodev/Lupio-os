@@ -44,7 +44,7 @@ Listo. Desde aquí, cada cambio que publiques le llega solo.
 Desde la carpeta del proyecto:
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)
 ```
 
 Después:
@@ -62,7 +62,7 @@ Cuando otro dev clone el repo y abra Claude Code, el plugin se le ofrece solo.
 
 Ejecuta **el mismo comando** del Momento 3. El instalador:
 
-- Mueve `.lupio/agents/`, `.lupio/commands/` y las skills Lupio de `.claude/skills/` a `.lupio/checkpoints/legacy-v1-*` (respaldo).
+- Mueve `.lupio/agents/`, `.lupio/commands/`, las skills Lupio de `.claude/skills/` y los comandos Lupio de `.claude/commands/` a `.lupio/checkpoints/legacy-v1-*` (respaldo).
 - Respeta tus skills propias del proyecto, tu `CLAUDE.md`, contexto y memoria.
 - Fusiona `.claude/settings.json` sin borrar lo que ya tenías.
 
@@ -112,11 +112,18 @@ mi-proyecto/
 | Variable | Efecto |
 |---|---|
 | `LUPIO_YES=true` | Instala sin preguntas (CI) |
+| `LUPIO_MARKETING=true` / `false` | Activa (o no) el plugin opcional `marketing-skills` sin preguntar. Sin la variable, el instalador pregunta; con `LUPIO_YES=true` no se activa |
 | `LUPIO_BYPASS=true` | `bypassPermissions` solo en tu máquina (`settings.local.json`). No se comparte con el equipo |
 
-Ejemplo: `LUPIO_YES=true bash <(curl -s https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)`
+Ejemplo: `LUPIO_YES=true bash <(curl -fsSL https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)`
 
-Por defecto el modo es `acceptEdits`: Claude edita archivos sin preguntar, pero los comandos de terminal piden permiso. Los commits, pushes y deploys siguen bloqueados.
+Por defecto el modo es `acceptEdits`: Claude edita archivos sin preguntar. Los comandos de desarrollo habituales (tests, build, lint, `artisan`, `composer`, `docker compose`, git de lectura, `curl` local, MCP del proyecto) ya vienen en la lista `allow` y no piden permiso. Siguen pidiendo permiso los borrados masivos y las operaciones destructivas (`rm -rf`, `migrate:fresh`, `docker compose down -v`, instalaciones globales), y siguen bloqueados los commits, pushes y deploys.
+
+La lista vive en `installer/permissions.json` (fuente única) y se **fusiona** en `.claude/settings.json` sin quitar nada tuyo, tanto al instalar como con `apply-update.sh`.
+
+### Autonomía y preguntas
+
+El `CLAUDE.md` que instala Lupio OS le indica a Claude que las decisiones técnicas son suyas y que termine las tareas largas de principio a fin. Solo pregunta por lógica de negocio, acciones irreversibles o de producción, o ambigüedad real, una sola vez y con su recomendación como default. Proyectos con un `CLAUDE.md` anterior: `bash .lupio/scripts/apply-update.sh --refresh-claude-md`.
 
 ---
 

@@ -7,7 +7,7 @@ description: "Scaffold a new project end-to-end."
 Scaffold a new project end-to-end.
 
 **Agents:** product-discovery → solution-architect → pm-controller → devops-lead
-**Ask:** project name, type, brief description, tech stack, team size
+**Inputs** (infiere del contexto y del código; pregunta solo lo que falte y no se pueda inferir, todo en un mensaje y con tu default recomendado): project name, type, brief description, tech stack, team size
 
 **Steps:** collect brief → `workflows/discovery.md` → `workflows/architecture.md` → generate folder structure → package.json / .env.example → git hooks → milestones → CI config
 

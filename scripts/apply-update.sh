@@ -14,8 +14,7 @@ set -euo pipefail
 
 LUPIO_DIR=".lupio"
 VERSION_FILE="$LUPIO_DIR/context/version.json"
-REPO_RAW="https://raw.githubusercontent.com/lupiodev/Lupio-os/main"
-REPO_URL="https://github.com/lupiodev/Lupio-os.git"
+REPO_URL="${LUPIO_REPO_URL:-https://github.com/lupiodev/Lupio-os.git}"
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -40,7 +39,8 @@ log "Descargando última versión de Lupio OS..."
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-git clone --depth=1 "$REPO_URL" "$TMP_DIR" 2>/dev/null
+git clone --depth=1 "$REPO_URL" "$TMP_DIR" >/dev/null 2>&1 \
+  || { echo "Error: no se pudo descargar $REPO_URL (¿sin red?). No se modificó nada."; exit 1; }
 
 # ── Backup reversible ANTES de sobrescribir nada ──────────────
 STAMP=$(date -u +"%Y%m%d-%H%M%S")
@@ -65,7 +65,25 @@ else
 fi
 if [ -d "$LUPIO_DIR/agents" ] || [ -d "$LUPIO_DIR/commands" ]; then
   warn "Proyecto en v1. Ejecuta el instalador nuevo para migrar:"
-  warn "  bash <(curl -s https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)"
+  warn "  bash <(curl -fsSL https://raw.githubusercontent.com/lupiodev/Lupio-os/main/installer/install.sh)"
+fi
+
+# Permisos de desarrollo (installer/permissions.json): se FUSIONAN, nunca se quita nada del proyecto.
+if [ -f "$TMP_DIR/installer/permissions.json" ] && [ -f ".claude/settings.json" ] && command -v python3 >/dev/null 2>&1; then
+  log "Fusionando permisos de desarrollo en .claude/settings.json..."
+  PERMISSIONS_JSON="$TMP_DIR/installer/permissions.json" python3 - << 'PYEOF' || warn "No se pudieron fusionar los permisos (settings.json inválido); revisa .claude/settings.json."
+import json, os
+p = ".claude/settings.json"
+data = json.load(open(p))
+perm = data.setdefault("permissions", {})
+rules = json.load(open(os.environ["PERMISSIONS_JSON"]))
+for key in ("allow", "ask", "deny"):
+    cur = perm.setdefault(key, [])
+    cur.extend(r for r in rules.get(key, []) if r not in cur)
+mcp = data.setdefault("enabledMcpjsonServers", [])
+mcp.extend(m for m in rules.get("enabledMcpjsonServers", []) if m not in mcp)
+json.dump(data, open(p, "w"), indent=2)
+PYEOF
 fi
 
 log "Actualizando workflows..."
@@ -127,23 +145,35 @@ if [ -d "$TMP_DIR/scripts" ]; then
   find "$LUPIO_DIR/scripts/" -name "*.sh" -exec chmod +x {} \;
 fi
 
-# Record updated SHA
+# Registrar versión instalada (check-updates.sh compara `version`, no el SHA)
 LATEST_SHA=$(cd "$TMP_DIR" && git rev-parse --short HEAD)
-python3 - << EOF
-import json, os
-path = "$VERSION_FILE"
-data = {}
+LATEST_VERSION=$(VERSION_FILE="$VERSION_FILE" PLUGIN_JSON="$TMP_DIR/.claude-plugin/plugin.json" LATEST_SHA="$LATEST_SHA" python3 - << 'PYEOF'
+import json, os, time
+path = os.environ["VERSION_FILE"]
 try:
-    with open(path) as f: data = json.load(f)
-except: pass
-data['sha'] = '$LATEST_SHA'
-data['last_updated'] = '$(date -u +"%Y-%m-%dT%H:%M:%SZ")'
-import time; data['last_checked'] = int(time.time())
-with open(path, 'w') as f: json.dump(data, f, indent=2)
-EOF
+    data = json.load(open(path))
+except Exception:
+    data = {}
+try:
+    version = json.load(open(os.environ["PLUGIN_JSON"]))["version"]
+except Exception:
+    version = data.get("version", "0.0.0")
+data.pop("latest_sha", None)
+data.update({
+    "version": version,
+    "latest_version": version,
+    "sha": os.environ["LATEST_SHA"],
+    "last_updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    "last_checked": int(time.time()),
+})
+os.makedirs(os.path.dirname(path), exist_ok=True)
+json.dump(data, open(path, "w"), indent=2)
+print(version)
+PYEOF
+)
 
 echo ""
-success "¡Lupio OS actualizado a la versión $LATEST_SHA!"
+success "¡Lupio OS actualizado a la versión $LATEST_VERSION ($LATEST_SHA)!"
 echo ""
 echo "  Plugin (agentes, comandos, skills) + workflows, templates y core actualizados."
 echo "  Tu memoria, contexto y CLAUDE.md NO fueron modificados."

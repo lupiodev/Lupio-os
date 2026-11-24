@@ -5,7 +5,7 @@
 
 ## Steps
 
-1. **Collect** — Ask: problem, primary user, must-have v1, out of scope, tech constraints, budget. Min: 1-3.
+1. **Collect** — Infer from the brief and the code first; ask the rest in ONE message with your default: problem, primary user, must-have v1, out of scope, tech constraints, budget. Min: 1-3.
 
 2. **Scope** (product-discovery) — Write `memory/scope.md`:
    problem statement · personas (max 3) · top 5 use cases · MVP in/out · assumptions · risks

@@ -18,6 +18,11 @@ adaptado. Se conservan sus licencias. Gracias a los autores.
 |-------|--------|---------------|
 | `ui-ux-pro-max` | [WAAMEngineer/ui-ux-pro-max-skill](https://github.com/WAAMEngineer/ui-ux-pro-max-skill) (MIT) | Se conservó la inteligencia estática (reglas por prioridad, errores comunes, checklist). Se **omitió** el motor CLI/Python y los CSVs (~468K) para no inflar cada proyecto; viewports alineados a 375/768/1280 de Lupio. Para la base de datos completa, ver el repo original. |
 
+## Plugin compañero opcional (no se copia al repo)
+| Plugin | Fuente | Licencia | Cómo llega |
+|--------|--------|----------|------------|
+| `marketing-skills@marketingskills` | [coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills) | MIT | El instalador lo declara en `.claude/settings.json` (`extraKnownMarketplaces` + `enabledPlugins`) si se acepta o con `LUPIO_MARKETING=true`. Se actualiza desde su propio marketplace; Lupio no mantiene copia. |
+
 ## Descartadas (con motivo)
 | Fuente | Motivo |
 |--------|--------|

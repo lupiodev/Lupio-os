@@ -9,8 +9,7 @@ Scans for repeated patterns and extracts them to the reusable template library.
 
 ## Do
 - Scan target directory for patterns appearing 2+ times
-- Present candidates for user approval before extracting
-- Extract approved patterns to `templates/<type>/<name>/`
+- Extract clear candidates (2+ repeticiones, sin lógica de negocio) directly to `templates/<type>/<name>/`; list the doubtful ones in the report
 - Document in `memory/reusable-candidates.md`
 - Does NOT refactor source code without explicit approval
 

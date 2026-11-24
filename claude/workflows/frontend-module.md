@@ -7,7 +7,7 @@
 ## Steps
 
 1. **Context** — Read `context/decisions.md` (frontend stack). List existing component names only.
-   Ask: feature name/route, data displayed, user actions, Figma/Lovable URL (optional).
+   Infer from context/code; ask only what is missing and not inferable (one message, with your default): feature name/route, data displayed, user actions, Figma/Lovable URL (optional).
 
 2. **Design ref** — If Figma URL: extract layout + tokens. If Lovable: treat as draft, validate vs design system.
 

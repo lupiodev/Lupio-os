@@ -7,14 +7,14 @@
       "env": {}
     },
     "git": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "."],
-      "description": "Git operations: status, diff, log, commit."
+      "command": "uvx",
+      "args": ["mcp-server-git", "--repository", "."],
+      "description": "Git operations: status, diff, log (commit bloqueado en settings). Requiere uv."
     },
     "github": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-github"],
-      "description": "GitHub API: issues, PRs, repos.",
+      "description": "GitHub API: issues, PRs, repos. Requiere GITHUB_TOKEN (export GITHUB_TOKEN=$(gh auth token)).",
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       }
@@ -25,13 +25,13 @@
       "description": "Persistent key-value memory for agents across sessions."
     },
     "fetch": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-fetch"],
+      "command": "uvx",
+      "args": ["mcp-server-fetch"],
       "description": "Fetch URLs for documentation and API references."
     },
     "time": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-time"],
+      "command": "uvx",
+      "args": ["mcp-server-time"],
       "description": "Current time and timezone utilities."
     }
   },

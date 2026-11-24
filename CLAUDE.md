@@ -10,6 +10,11 @@ Este repo **es** el sistema operativo de desarrollo de Lupio. Desde v2.0 es
 
 **Al publicar cambios en agentes/comandos/skills: sube `version` en
 `.claude-plugin/plugin.json` (y en `package.json`). Sin eso no llegan.**
+Esa `version` también es la que compara `scripts/check-updates.sh` para avisar
+de actualización en los proyectos (no el SHA: los commits `learn:` no avisan).
+
+Skills de marketing: plugin compañero opcional `marketing-skills@marketingskills`
+(Corey Haines, MIT) que el instalador activa a pedido; no se copia a este repo.
 
 Lupio es una empresa de desarrollo: plataformas digitales, SaaS, ecommerce,
 automatización y soluciones con IA. Stack frecuente: React/Next.js/Tailwind/
@@ -26,8 +31,8 @@ Al iniciar **cualquier proyecto o feature** de Lupio, ANTES de escribir código:
 1. **`lupio-arranque`** — solo al arrancar un proyecto/MVP/repo nuevo. Define
    problema, usuario, la primera cosa visible, stack mínimo y el Día 1.
 2. **`lupio-plan`** — SIEMPRE antes de tocar código en una tarea no trivial.
-   Explora, hace las preguntas, propone pasos pequeños y reversibles y **espera
-   tu OK**.
+   Explora, decide, propone pasos pequeños y reversibles y **ejecuta sin esperar
+   OK** (brújula, no compuerta; ver *Autonomía* abajo).
 
 Y en sus momentos:
 
@@ -82,10 +87,10 @@ idea dudosa → lupio-abogado-diablo → (seguir) → lupio-arranque (si es nuev
 ## Protocolo de Trabajo (OBLIGATORIO en todo proyecto Lupio)
 
 No se entrega nada que no haya pasado sus propias pruebas. Ciclo:
-**PLAN → CONFIRMAR → IMPLEMENTAR → AUTO-VERIFICAR → REPORTAR.**
+**PLAN → DECIDIR → IMPLEMENTAR → AUTO-VERIFICAR → REPORTAR.**
 
 1. **Plan** con criterios de aceptación, edge cases y qué NO se hará (`lupio-plan`);
-   esperar OK antes de código en features no triviales.
+   se muestra y se ejecuta, sin esperar OK.
 2. **Pensar como senior** antes de codear: edge cases, errores/recuperación,
    validación en servidor, concurrencia (idempotencia/transacciones), seguridad
    (`lupio-seguridad`). Si el problema ya lo resolvió una plataforma madura,
@@ -105,14 +110,26 @@ No se entrega nada que no haya pasado sus propias pruebas. Ciclo:
 (En este repo, que es markdown + shell, el Loop de Verificación equivale a
 `bash -n` de los scripts, `shellcheck` si está, y confirmar que las skills auto-cargan.)
 
+## Autonomía y Preguntas (aplica en este repo y en todos los proyectos)
+
+Las decisiones **técnicas** son mías: elijo la mejor opción, la aplico y la dejo
+registrada. Las tareas largas se terminan de principio a fin. Pregunto **solo** si:
+(1) es una decisión de **lógica de negocio** (precios, permisos de negocio, flujos
+del cliente, alcance), (2) es **irreversible o fuera del repo** (producción, borrar
+datos reales, commit/push/deploy, cobros, credenciales), o (3) hay una ambigüedad
+real que cambia el resultado de fondo. Entonces pregunto UNA vez, todo junto y con
+mi recomendación como default; si no hay respuesta, sigo con el default y lo señalo.
+Texto completo: `claude/CLAUDE.template.md` › *Autonomía y Preguntas*. Los permisos de
+desarrollo viven en `installer/permissions.json` (allow/ask/deny, fuente única).
+
 ## Reglas de trabajo en ESTE repo (Lupio OS)
 
-- **No commits / no deploys sin confirmación textual explícita.** El usuario los
-  maneja. `git add/status/diff/log` sí; `git commit/push/tag` y deploys, no, salvo
-  que el usuario lo pida en el momento.
-- **Branch Creation Policy:** por defecto trabajar en la rama actual. Proponer
-  rama nueva (y esperar confirmación) solo si el cambio es un feature/refactor
-  significativo.
+- **No commits / no deploys por iniciativa propia.** El usuario los maneja.
+  `git add/status/diff/log` sí; `git commit/push/tag` y deploys, solo cuando el
+  usuario lo pide en el momento (ese pedido ya es la confirmación: no se repite).
+- **Branch Creation Policy:** por defecto trabajar en la rama actual. Si el cambio
+  es un feature/refactor significativo, sugerir la rama en una línea y seguir en la
+  actual (sin bloquear la tarea esperando respuesta).
 - **Editar una skill:** modifica `.claude/skills/<nombre>/SKILL.md` (fuente única).
   El instalador la propaga; no dupliques en `claude/`.
 - **Verificación de este repo** (es markdown + shell, no una app):
@@ -120,5 +137,7 @@ No se entrega nada que no haya pasado sus propias pruebas. Ciclo:
   - `shellcheck` si está disponible.
   - Skills: comprobar que cada `SKILL.md` tiene frontmatter `name` = carpeta y
     `description` con disparadores, y que aparecen al listar skills.
+- **No borres `claude/agents`** (symlink a `../agents`): los `apply-update.sh` de proyectos
+  v1 copian desde esa ruta y sin él fallan a medias y vuelven a pedir actualizar.
 - **Al cambiar el sistema, mantén sincronizados:** `installer/install.sh`,
-  `scripts/apply-update.sh` y este `CLAUDE.md`.
+  `scripts/apply-update.sh`, `installer/permissions.json` y este `CLAUDE.md`.

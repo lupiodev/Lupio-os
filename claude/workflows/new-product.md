@@ -15,7 +15,7 @@ User runs `/bootstrap-project` on an empty repository.
 1. Run `solution-architect` with approved scope
 2. Run `ux-reviewer` on initial flow sketches (if provided)
 3. Run `cost-estimator` on infrastructure design
-4. **Checkpoint:** Present architecture.md for approval
+4. **Checkpoint:** Save architecture.md and continue (the user reviews it in the final report; stop only for a business-level conflict)
 
 ### Phase 3: Foundation
 1. Run `devops-lead` to set up CI/CD and environments
